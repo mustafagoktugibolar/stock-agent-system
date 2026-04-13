@@ -1,0 +1,11 @@
+name: stock-agent
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.13
+  - pip
+  - numba  # conda-forge build; also in requirements.txt for Docker
+  - pip:
+      - -r requirements.txt
