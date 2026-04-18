@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const client = axios.create({
+export const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   timeout: 120_000, // 2 min - analysis can take a while
   headers: { 'Content-Type': 'application/json' },
@@ -29,6 +29,7 @@ export interface TechnicalOutput {
 export interface NewsItem {
   title: string
   source: string
+  url: string | null
   published_at: string | null
   sentiment_score: number
   summary: string
@@ -62,6 +63,39 @@ export interface RiskOutput {
   confidence: number
 }
 
+export interface CompanyProfile {
+  symbol: string
+  name: string
+  sector: string | null
+  industry: string | null
+  description: string | null
+  market_cap: number | null
+  pe_ratio: number | null
+  forward_pe: number | null
+  dividend_yield: number | null
+  fifty_two_week_high: number | null
+  fifty_two_week_low: number | null
+  current_price: number | null
+  currency: string
+  exchange: string | null
+  website: string | null
+  employees: number | null
+}
+
+export interface FinancialLineItem {
+  label: string
+  values: Record<string, number | null>
+}
+
+export interface FinancialStatements {
+  symbol: string
+  timestamp: string
+  balance_sheet: FinancialLineItem[]
+  income_statement: FinancialLineItem[]
+  cash_flow: FinancialLineItem[]
+  periods: string[]
+}
+
 export interface FinalRecommendation {
   symbol: string
   timestamp: string
@@ -86,6 +120,8 @@ export interface AnalysisResponse {
   created_at: string
   completed_at: string | null
   recommendation: FinalRecommendation | null
+  company_profile: CompanyProfile | null
+  financial_statements: FinancialStatements | null
   technical_analysis: TechnicalOutput | null
   news_analysis: NewsOutput | null
   risk_analysis: RiskOutput | null
@@ -97,26 +133,61 @@ export interface AnalysisResponse {
 
 export async function analyzeSync(
   symbol: string,
+  language: string = 'en',
   forceRefresh = false,
 ): Promise<AnalysisResponse> {
   const { data } = await client.post<AnalysisResponse>('/api/v1/analyze/sync', {
     symbol,
     timeframe: '1d',
+    language,
     force_refresh: forceRefresh,
   })
   return data
 }
 
-export async function getCachedAnalysis(symbol: string): Promise<AnalysisResponse> {
-  const { data } = await client.get<AnalysisResponse>(`/api/v1/analysis/${symbol}`)
+export async function getCachedAnalysis(symbol: string, language: string = 'en'): Promise<AnalysisResponse> {
+  const { data } = await client.get<AnalysisResponse>(`/api/v1/analysis/${symbol}?language=${language}`)
   return data
 }
 
-export async function invalidateCache(symbol: string): Promise<void> {
-  await client.delete(`/api/v1/analysis/${symbol}`)
+export async function invalidateCache(symbol: string, language: string = 'en'): Promise<void> {
+  await client.delete(`/api/v1/analysis/${symbol}?language=${language}`)
 }
 
 export async function checkHealth(): Promise<{ status: string; redis: string }> {
   const { data } = await client.get('/health')
   return data
+}
+
+export type ChatMessageRole = 'user' | 'assistant'
+
+export interface ChatMessage {
+  role: ChatMessageRole
+  content: string
+}
+
+export async function* streamChat(
+  symbol: string,
+  message: string,
+  history: ChatMessage[],
+  language: string = 'en',
+): AsyncGenerator<string, void, unknown> {
+  const response = await fetch(`${client.defaults.baseURL}/api/v1/chat/${symbol}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, history, timeframe: '1d', language }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to connect to chat stream')
+  }
+
+  const reader = response.body?.pipeThrough(new TextDecoderStream()).getReader()
+  if (!reader) throw new Error('No readable stream')
+
+  while (true) {
+    const { value, done } = await reader.read()
+    if (done) break
+    if (value) yield value
+  }
 }

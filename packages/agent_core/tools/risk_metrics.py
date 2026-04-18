@@ -8,20 +8,11 @@ import pandas as pd
 from langchain_core.tools import tool
 
 from packages.shared.logging.logger import get_logger
+from packages.shared.utils.helpers import safe_float
 
 logger = get_logger(__name__)
 
 _RISK_FREE_RATE_ANNUAL = 0.045  # 4.5% annualized
-
-
-def _safe_float(value: Any) -> float | None:
-    if value is None:
-        return None
-    try:
-        f = float(value)
-        return None if np.isnan(f) or np.isinf(f) else f
-    except (TypeError, ValueError):
-        return None
 
 
 def _ohlcv_to_returns(ohlcv_json: str) -> pd.Series:
@@ -57,20 +48,20 @@ def calculate_risk_metrics(ohlcv_json: str, benchmark_json: str = "") -> str:
         return json.dumps({"error": "Insufficient data for risk calculation (need ≥20 bars)"})
 
     # ── Annualized Volatility ─────────────────────────────────────────────────
-    ann_volatility = _safe_float(returns.std() * np.sqrt(252))
+    ann_volatility = safe_float(returns.std() * np.sqrt(252))
 
     # ── Value-at-Risk (95% confidence, daily) ────────────────────────────────
-    var_95 = _safe_float(np.percentile(returns, 5))
+    var_95 = safe_float(np.percentile(returns, 5))
 
     # ── Max Drawdown ─────────────────────────────────────────────────────────
     cumulative = (1 + returns).cumprod()
     rolling_max = cumulative.cummax()
     drawdown_series = (cumulative - rolling_max) / rolling_max
-    max_drawdown = _safe_float(drawdown_series.min())
+    max_drawdown = safe_float(drawdown_series.min())
 
     # ── Sharpe Ratio (annualized) ─────────────────────────────────────────────
     rf_daily = _RISK_FREE_RATE_ANNUAL / 252
-    sharpe = _safe_float(
+    sharpe = safe_float(
         (returns.mean() - rf_daily) / returns.std() * np.sqrt(252)
         if returns.std() > 0
         else None
@@ -86,19 +77,19 @@ def calculate_risk_metrics(ohlcv_json: str, benchmark_json: str = "") -> str:
                 cov_matrix = aligned.cov()
                 bench_var = float(bench_returns.var())
                 if bench_var > 0:
-                    beta = _safe_float(cov_matrix.iloc[0, 1] / bench_var)
+                    beta = safe_float(cov_matrix.iloc[0, 1] / bench_var)
         except Exception as e:
             logger.warning("Beta calculation failed: %s", e)
 
     # ── 30-day return ─────────────────────────────────────────────────────────
-    returns_30d = _safe_float(returns.tail(30).sum())
+    returns_30d = safe_float(returns.tail(30).sum())
 
     # ── Calmar Ratio ─────────────────────────────────────────────────────────
     calmar = None
     if ann_volatility and max_drawdown and max_drawdown != 0:
-        annual_return = _safe_float(returns.mean() * 252)
+        annual_return = safe_float(returns.mean() * 252)
         if annual_return is not None:
-            calmar = _safe_float(annual_return / abs(max_drawdown))
+            calmar = safe_float(annual_return / abs(max_drawdown))
 
     return json.dumps(
         {

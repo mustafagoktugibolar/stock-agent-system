@@ -9,21 +9,15 @@ from packages.agent_core.state.agent_state import AgentState
 from packages.agent_core.tools.indicators import calculate_technical_indicators
 from packages.agent_core.tools.market_data import fetch_ohlcv
 from packages.shared.logging.logger import get_logger
+from packages.shared.utils.helpers import safe_float
 
 logger = get_logger(__name__)
-
-
-def _safe_float(value: Any, default: float = 0.0) -> float:
-    try:
-        return default if value is None else float(value)
-    except (TypeError, ValueError):
-        return default
 
 
 def _signal(indicator: str, value: Any, signal: str, description: str) -> TechnicalSignal:
     return TechnicalSignal(
         indicator=indicator,
-        value=_safe_float(value),
+        value=safe_float(value, 0.0),
         signal=signal,  # type: ignore[arg-type]
         description=description,
     )
@@ -31,8 +25,8 @@ def _signal(indicator: str, value: Any, signal: str, description: str) -> Techni
 
 def _support_resistance(ohlcv_json: str) -> tuple[list[float], list[float]]:
     bars = json.loads(ohlcv_json).get("bars", [])[-60:]
-    lows = [_safe_float(bar.get("low")) for bar in bars if bar.get("low") is not None]
-    highs = [_safe_float(bar.get("high")) for bar in bars if bar.get("high") is not None]
+    lows = [safe_float(bar.get("low"), 0.0) for bar in bars if bar.get("low") is not None]
+    highs = [safe_float(bar.get("high"), 0.0) for bar in bars if bar.get("high") is not None]
     if not lows or not highs:
         return [], []
 
@@ -110,10 +104,10 @@ def technical_agent(state: AgentState) -> dict[str, Any]:
     confidence = min(0.9, 0.55 + (abs(bullish - bearish) * 0.1))
     summary = (
         f"{symbol} technical bias is {bias}. Latest close is "
-        f"{_safe_float(current_price):.2f}"
+        f"{safe_float(current_price, 0.0):.2f}"
     )
     if price_change is not None:
-        summary += f" with a {_safe_float(price_change):.2f}% last-bar move."
+        summary += f" with a {safe_float(price_change, 0.0):.2f}% last-bar move."
 
     technical_output = TechnicalOutput(
         symbol=symbol,

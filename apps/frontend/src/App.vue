@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#f5f7f8]">
+  <div class="min-h-screen bg-[var(--color-bg)]">
     <RouterView />
   </div>
 </template>

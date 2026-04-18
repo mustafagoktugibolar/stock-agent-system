@@ -9,15 +9,9 @@ from packages.agent_core.state.agent_state import AgentState
 from packages.agent_core.tools.market_data import fetch_ohlcv
 from packages.agent_core.tools.risk_metrics import calculate_risk_metrics
 from packages.shared.logging.logger import get_logger
+from packages.shared.utils.helpers import safe_float
 
 logger = get_logger(__name__)
-
-
-def _safe_float(value: Any, default: float = 0.0) -> float:
-    try:
-        return default if value is None else float(value)
-    except (TypeError, ValueError):
-        return default
 
 
 def _classify_risk(volatility: float, max_drawdown: float, beta: float | None) -> str:
@@ -72,8 +66,8 @@ def risk_agent(state: AgentState) -> dict[str, Any]:
             "errors": [f"risk_agent failed: {e}"],
         }
 
-    volatility = _safe_float(metrics_data.get("annualized_volatility"))
-    max_drawdown = _safe_float(metrics_data.get("max_drawdown"))
+    volatility = safe_float(metrics_data.get("annualized_volatility"), 0.0)
+    max_drawdown = safe_float(metrics_data.get("max_drawdown"), 0.0)
     beta = metrics_data.get("beta")
     beta_value = float(beta) if beta is not None else None
     risk_level = _classify_risk(volatility, max_drawdown, beta_value)
@@ -86,7 +80,7 @@ def risk_agent(state: AgentState) -> dict[str, Any]:
         ),
         RiskMetric(
             metric_name="Daily VaR 95%",
-            value=_safe_float(metrics_data.get("var_95_daily")),
+            value=safe_float(metrics_data.get("var_95_daily"), 0.0),
             interpretation="Estimated one-day downside at the 95% confidence level.",
         ),
         RiskMetric(
@@ -96,12 +90,12 @@ def risk_agent(state: AgentState) -> dict[str, Any]:
         ),
         RiskMetric(
             metric_name="Sharpe Ratio",
-            value=_safe_float(metrics_data.get("sharpe_ratio")),
+            value=safe_float(metrics_data.get("sharpe_ratio"), 0.0),
             interpretation="Risk-adjusted return relative to the configured risk-free rate.",
         ),
         RiskMetric(
             metric_name="30-day Return",
-            value=_safe_float(metrics_data.get("returns_30d")),
+            value=safe_float(metrics_data.get("returns_30d"), 0.0),
             interpretation="Recent cumulative return over the latest 30 trading sessions.",
         ),
     ]

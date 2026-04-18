@@ -31,6 +31,7 @@ class NewsItem(BaseModel):
 
     title: str
     source: str
+    url: Optional[str] = None
     published_at: Optional[datetime] = None
     sentiment_score: float = Field(ge=-1.0, le=1.0)
     summary: str
@@ -68,6 +69,48 @@ class RiskOutput(BaseModel):
     beta: Optional[float] = None
     summary: str
     confidence: float = Field(ge=0.0, le=1.0)
+
+
+# ── Company Profile & Financials ─────────────────────────────────────────────
+
+
+class CompanyProfile(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    symbol: str
+    name: str
+    sector: Optional[str] = None
+    industry: Optional[str] = None
+    description: Optional[str] = None
+    market_cap: Optional[float] = None
+    pe_ratio: Optional[float] = None
+    forward_pe: Optional[float] = None
+    dividend_yield: Optional[float] = None
+    fifty_two_week_high: Optional[float] = None
+    fifty_two_week_low: Optional[float] = None
+    current_price: Optional[float] = None
+    currency: str = "USD"
+    exchange: Optional[str] = None
+    website: Optional[str] = None
+    employees: Optional[int] = None
+
+
+class FinancialLineItem(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    label: str
+    values: dict[str, Optional[float]]
+
+
+class FinancialStatements(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    symbol: str
+    timestamp: datetime
+    balance_sheet: list[FinancialLineItem]
+    income_statement: list[FinancialLineItem]
+    cash_flow: list[FinancialLineItem]
+    periods: list[str]
 
 
 class FinalRecommendation(BaseModel):

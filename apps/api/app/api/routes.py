@@ -6,10 +6,13 @@ from datetime import datetime, timezone
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import StreamingResponse
 
+from apps.api.app.schemas.chat import ChatRequest
 from apps.api.app.schemas.request import AnalysisRequest
-from apps.api.app.schemas.response import AnalysisResponse, AnalysisStatusResponse
+from apps.api.app.schemas.response import AnalysisResponse
 from apps.api.app.services.analysis_service import AnalysisService
+from apps.api.app.services.chat_service import ChatService
 from packages.shared.config.settings import get_settings
 from packages.shared.logging.logger import get_logger
 
@@ -45,6 +48,7 @@ async def analyze_sync(
     return await service.run_analysis(
         symbol=request.symbol,
         timeframe=request.timeframe,
+        language=request.language,
         force_refresh=request.force_refresh,
     )
 
@@ -70,6 +74,7 @@ async def analyze_async(
         service.run_analysis,
         request.symbol,
         request.timeframe,
+        request.language,
         request.force_refresh,
     )
     return AnalysisResponse(
@@ -88,11 +93,12 @@ async def analyze_async(
 async def get_cached_analysis(
     symbol: str,
     timeframe: str = "1d",
+    language: str = "en",
     redis: aioredis.Redis = Depends(get_redis),
 ) -> AnalysisResponse:
     """Return the most recent cached analysis for the given symbol."""
     symbol = symbol.upper().strip()
-    cache_key = f"analysis:{symbol}:{timeframe}"
+    cache_key = f"analysis:{symbol}:{timeframe}:{language}"
     try:
         raw = await redis.get(cache_key)
     except Exception as e:
@@ -115,11 +121,12 @@ async def get_cached_analysis(
 async def invalidate_cache(
     symbol: str,
     timeframe: str = "1d",
+    language: str = "en",
     redis: aioredis.Redis = Depends(get_redis),
 ) -> None:
     """Delete cached analysis from Redis, forcing a fresh run on the next request."""
     symbol = symbol.upper().strip()
-    await redis.delete(f"analysis:{symbol}:{timeframe}")
+    await redis.delete(f"analysis:{symbol}:{timeframe}:{language}")
 
 
 @router.websocket("/ws/analysis/{symbol}")
@@ -145,3 +152,24 @@ async def analysis_websocket(websocket: WebSocket, symbol: str) -> None:
     finally:
         await pubsub.unsubscribe(f"analysis_progress:{symbol}")
         await redis_sub.aclose()
+
+
+@router.post(
+    "/chat/{symbol}",
+    summary="Chat with the agent context-aware of the current analysis.",
+)
+async def chat_with_agent(
+    symbol: str,
+    request: ChatRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> StreamingResponse:
+    """Stream a response from the LLM passing the cached analysis context."""
+    service = ChatService(redis)
+    generator = service.stream_chat(
+        symbol=symbol,
+        message=request.message,
+        history=request.history,
+        timeframe=request.timeframe,
+        language=request.language,
+    )
+    return StreamingResponse(generator, media_type="text/event-stream")

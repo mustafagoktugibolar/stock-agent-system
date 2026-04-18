@@ -1,6 +1,7 @@
 """Bridge between the FastAPI layer and the LangGraph agent core."""
 
 import asyncio
+import json
 import uuid
 from datetime import datetime, timezone
 
@@ -22,8 +23,8 @@ class AnalysisService:
         self._redis = redis_client
         self._graph = get_analysis_graph()
 
-    def _cache_key(self, symbol: str, timeframe: str) -> str:
-        return f"analysis:{symbol.upper()}:{timeframe}"
+    def _cache_key(self, symbol: str, timeframe: str, language: str) -> str:
+        return f"analysis:{symbol.upper()}:{timeframe}:{language}"
 
     def _build_response(self, state: AgentState, analysis_id: str) -> AnalysisResponse:
         return AnalysisResponse(
@@ -33,6 +34,8 @@ class AnalysisService:
             created_at=datetime.now(timezone.utc),
             completed_at=datetime.now(timezone.utc),
             recommendation=state.get("final_recommendation"),
+            company_profile=state.get("company_profile"),
+            financial_statements=state.get("financial_statements"),
             technical_analysis=state.get("technical_analysis"),
             news_analysis=state.get("news_analysis"),
             risk_analysis=state.get("risk_analysis"),
@@ -81,6 +84,7 @@ class AnalysisService:
         self,
         symbol: str,
         timeframe: str = "1d",
+        language: str = "en",
         force_refresh: bool = False,
     ) -> AnalysisResponse:
         """Run the full multi-agent analysis and return a structured response.
@@ -90,7 +94,7 @@ class AnalysisService:
         Results are persisted to PostgreSQL after every fresh run.
         """
         symbol = symbol.upper().strip()
-        cache_key = self._cache_key(symbol, timeframe)
+        cache_key = self._cache_key(symbol, timeframe, language)
         settings = get_settings()
 
         if not force_refresh:
@@ -110,21 +114,34 @@ class AnalysisService:
         initial_state: AgentState = {
             "symbol": symbol,
             "timeframe": timeframe,
+            "language": language,
             "analysis_id": analysis_id,
             "messages": [],
             "technical_analysis": None,
             "news_analysis": None,
             "risk_analysis": None,
+            "company_profile": None,
+            "financial_statements": None,
             "final_recommendation": None,
             "current_agent": "start",
             "errors": [],
         }
 
-        loop = asyncio.get_event_loop()
+        result_state = initial_state.copy()
+        
         try:
-            result_state: AgentState = await loop.run_in_executor(
-                None, lambda: self._graph.invoke(initial_state)
-            )
+            async for output in self._graph.astream(initial_state, stream_mode=["updates", "values"]):
+                mode, payload = output
+                if mode == "values":
+                    result_state = payload
+                elif mode == "updates":
+                    for node_name, _ in payload.items():
+                        await self._redis.publish(
+                            f"analysis_progress:{symbol}",
+                            json.dumps({"agent": node_name, "status": "completed"})
+                        )
+
+
         except Exception as e:
             logger.error("Graph invocation failed for %s: %s", symbol, e)
             return AnalysisResponse(

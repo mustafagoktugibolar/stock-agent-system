@@ -1,11 +1,13 @@
 """Periodic job: validate past recommendations against actual price movements."""
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Optional
 
 import redis.asyncio as aioredis
 
+from packages.agent_core.evaluation.evaluator import RecommendationEvaluator
+from packages.agent_core.models.agent_output import FinalRecommendation
 from packages.agent_core.tools.market_data import fetch_ohlcv
 from packages.shared.logging.logger import get_logger
 
@@ -13,25 +15,7 @@ logger = get_logger(__name__)
 
 _HORIZONS_DAYS = {"short_term": 5, "medium_term": 20, "long_term": 60}
 
-
-def _evaluate_recommendation(
-    recommendation: str,
-    entry_price: float,
-    current_price: float,
-) -> dict:
-    """Determine if a recommendation was correct based on subsequent price movement."""
-    pct_change = (current_price - entry_price) / entry_price * 100
-    correct = (
-        (recommendation == "BUY" and pct_change > 2)
-        or (recommendation == "SELL" and pct_change < -2)
-        or (recommendation == "HOLD" and abs(pct_change) <= 5)
-    )
-    return {
-        "entry_price": entry_price,
-        "current_price": current_price,
-        "pct_change": round(pct_change, 2),
-        "correct": correct,
-    }
+_evaluator = RecommendationEvaluator()
 
 
 async def run_backtest(
@@ -65,16 +49,31 @@ async def run_backtest(
         target_idx = min(days, len(bars) - 1)
         current_price = float(bars[target_idx]["close"])
 
-        result = _evaluate_recommendation(recommendation, entry_price, current_price)
-        result.update(
-            {
-                "symbol": symbol,
-                "recommendation": recommendation,
-                "horizon": horizon,
-                "analysis_id": analysis_id,
-                "evaluated_at": datetime.now(timezone.utc).isoformat(),
-            }
+        # Build a minimal FinalRecommendation to feed the evaluator
+        rec = FinalRecommendation(
+            symbol=symbol,
+            timestamp=datetime.now(timezone.utc),
+            recommendation=recommendation,
+            confidence=0.0,
+            time_horizon=horizon,
+            reasoning="Backtest evaluation",
+            technical_summary="",
+            news_summary="",
+            risk_summary="",
         )
+        score = _evaluator.score_accuracy(rec, entry_price, current_price)
+
+        result = {
+            "symbol": symbol,
+            "recommendation": recommendation,
+            "entry_price": entry_price,
+            "current_price": current_price,
+            "pct_change": score.pct_change,
+            "correct": score.correct,
+            "horizon": horizon,
+            "analysis_id": analysis_id,
+            "evaluated_at": datetime.now(timezone.utc).isoformat(),
+        }
 
         if analysis_id:
             await redis_client.setex(
@@ -94,3 +93,4 @@ async def run_backtest(
     except Exception as e:
         logger.error("Backtest failed for %s: %s", symbol, e)
         return {"error": str(e), "symbol": symbol}
+

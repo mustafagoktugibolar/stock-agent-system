@@ -1,4 +1,33 @@
 from datetime import datetime
+from typing import Any, overload
+
+import numpy as np
+
+
+@overload
+def safe_float(value: Any) -> float | None: ...
+@overload
+def safe_float(value: Any, default: float) -> float: ...
+
+
+def safe_float(value: Any, default: float | None = None) -> float | None:
+    """Convert *value* to a Python float, handling None / NaN / Inf.
+
+    When *default* is supplied, return it instead of ``None`` for
+    unconvertible or missing values.  This satisfies both call-sites:
+
+    * ``safe_float(x)``         → ``float | None``  (tools layer)
+    * ``safe_float(x, 0.0)``    → ``float``         (agent layer)
+    """
+    if value is None:
+        return default
+    try:
+        f = float(value)
+        if np.isnan(f) or np.isinf(f):
+            return default
+        return f
+    except (TypeError, ValueError):
+        return default
 
 
 def format_symbol(symbol: str) -> str:

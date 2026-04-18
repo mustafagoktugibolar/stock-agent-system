@@ -1,79 +1,78 @@
 <template>
-  <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-    <h3 class="mb-3 flex items-center gap-2 font-semibold text-zinc-800">
-      Technical Analysis
-      <span class="ml-auto rounded-full px-2 py-0.5 text-xs font-medium capitalize" :class="biasClass">
-        {{ analysis.overall_technical_bias }}
-      </span>
-    </h3>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">{{ t('tech.title') }}</span>
+      <span class="badge capitalize" :class="biasClass">{{ tVal(analysis.overall_technical_bias) }}</span>
+    </div>
 
-    <!-- Signals -->
-    <div class="mb-4 space-y-2">
+    <!-- Signals table -->
+    <div class="mb-4 space-y-1.5">
       <div
         v-for="signal in analysis.signals"
         :key="signal.indicator"
-        class="flex items-start justify-between rounded-lg bg-zinc-50 px-3 py-2 text-sm"
+        class="flex items-center justify-between rounded-lg bg-white/[0.02] px-3 py-2 text-sm"
       >
-        <div>
-          <span class="font-medium text-zinc-700">{{ signal.indicator }}</span>
-          <p class="text-xs text-zinc-500">{{ signal.description }}</p>
+        <div class="min-w-0 flex-1">
+          <span class="font-medium text-white">{{ signal.indicator }}</span>
+          <p class="truncate text-xs text-[var(--color-text-muted)]">{{ signal.description }}</p>
         </div>
-        <div class="text-right">
-          <span class="text-zinc-800">{{ signal.value.toFixed(2) }}</span>
-          <span class="ml-2 text-xs font-medium capitalize" :class="signalColor(signal.signal)">
-            {{ signal.signal }}
+        <div class="flex shrink-0 items-center gap-3 pl-3 text-right">
+          <span class="tabular-nums text-[var(--color-text-secondary)]">{{ signal.value.toFixed(2) }}</span>
+          <span class="w-16 text-right text-xs font-semibold capitalize" :class="signalColor(signal.signal)">
+            {{ tVal(signal.signal) }}
           </span>
         </div>
       </div>
     </div>
 
-    <!-- Support / Resistance -->
-    <div class="mb-3 flex gap-3 text-xs">
-      <div v-if="analysis.support_levels.length" class="flex-1">
-        <span class="font-medium text-green-700">Support:</span>
-        {{ analysis.support_levels.map(formatPrice).join(', ') }}
+    <!-- Support & Resistance -->
+    <div class="mb-3 flex gap-4 text-xs">
+      <div v-if="analysis.support_levels.length">
+        <span class="text-[var(--color-text-muted)]">{{ t('tech.support') }}</span>
+        <span class="ml-1.5 font-semibold text-green-400">
+          {{ analysis.support_levels.map(formatPrice).join(' · ') }}
+        </span>
       </div>
-      <div v-if="analysis.resistance_levels.length" class="flex-1 text-right">
-        <span class="font-medium text-red-700">Resistance:</span>
-        {{ analysis.resistance_levels.map(formatPrice).join(', ') }}
+      <div v-if="analysis.resistance_levels.length">
+        <span class="text-[var(--color-text-muted)]">{{ t('tech.resistance') }}</span>
+        <span class="ml-1.5 font-semibold text-red-400">
+          {{ analysis.resistance_levels.map(formatPrice).join(' · ') }}
+        </span>
       </div>
     </div>
 
     <!-- Summary -->
-    <p class="text-sm text-zinc-600">{{ analysis.summary }}</p>
-    <p class="mt-1 text-right text-xs text-zinc-400">Confidence: {{ Math.round(analysis.confidence * 100) }}%</p>
+    <p class="text-sm text-[var(--color-text-secondary)]">{{ analysis.summary }}</p>
+    <p class="mt-2 text-right text-[10px] text-[var(--color-text-muted)]">
+      {{ t('rec.confidence') }}: {{ Math.round(analysis.confidence * 100) }}%
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TechnicalOutput } from '@/services/api'
+import { t, tVal } from '@/locales'
 
 const props = defineProps<{ analysis: TechnicalOutput }>()
 
 const biasClass = computed(() => ({
-  'bg-green-100 text-green-800': props.analysis.overall_technical_bias === 'bullish',
-  'bg-red-100 text-red-800': props.analysis.overall_technical_bias === 'bearish',
-  'bg-zinc-100 text-zinc-700': props.analysis.overall_technical_bias === 'neutral',
+  'badge-bullish': props.analysis.overall_technical_bias === 'bullish',
+  'badge-bearish': props.analysis.overall_technical_bias === 'bearish',
+  'badge-neutral': props.analysis.overall_technical_bias === 'neutral',
 }))
 
 function signalColor(signal: string) {
   return {
-    'text-green-600': signal === 'bullish',
-    'text-red-600': signal === 'bearish',
-    'text-zinc-500': signal === 'neutral',
+    'text-green-400': signal === 'bullish',
+    'text-red-400': signal === 'bearish',
+    'text-[var(--color-text-muted)]': signal === 'neutral',
   }
 }
 
 function formatPrice(value: number): string {
-  if (props.analysis.symbol.endsWith('.IS')) {
-    return `TRY ${value.toFixed(2)}`
-  }
-
-  if (props.analysis.symbol.includes('.')) {
-    return value.toFixed(2)
-  }
-
+  if (props.analysis.symbol.endsWith('.IS')) return `₺${value.toFixed(2)}`
+  if (props.analysis.symbol.includes('.')) return value.toFixed(2)
   return `$${value.toFixed(2)}`
 }
 </script>

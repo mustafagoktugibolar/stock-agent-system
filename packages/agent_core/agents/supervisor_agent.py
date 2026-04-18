@@ -45,12 +45,20 @@ def supervisor_agent(state: AgentState) -> dict[str, Any]:
     technical_str = _format_analysis(state.get("technical_analysis"))
     news_str = _format_analysis(state.get("news_analysis"))
     risk_str = _format_analysis(state.get("risk_analysis"))
+    profile_str = _format_analysis(state.get("company_profile"))
+    financials_str = _format_analysis(state.get("financial_statements"))
+
+    language = state.get("language", "en")
+    lang_instruction = "IMPORTANT: You MUST write `reasoning`, `technical_summary`, `news_summary`, and `risk_summary` in Turkish while keeping financial acronyms intact." if language == "tr" else ""
 
     system_prompt = _PROMPT_PATH.read_text().format(
         symbol=symbol,
+        company_profile=profile_str,
+        financial_statements=financials_str,
         technical_analysis=technical_str,
         news_analysis=news_str,
         risk_analysis=risk_str,
+        language_directive=lang_instruction,
     )
 
     try:
@@ -59,7 +67,8 @@ def supervisor_agent(state: AgentState) -> dict[str, Any]:
                 SystemMessage(content=system_prompt),
                 HumanMessage(
                     content=(
-                        f"Based on the three analyses above, produce the final investment "
+                        f"Based on all the analyses above (company profile, financials, "
+                        f"technical, news, and risk), produce the final investment "
                         f"recommendation for {symbol}."
                     )
                 ),

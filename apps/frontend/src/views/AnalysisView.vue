@@ -1,192 +1,194 @@
 <template>
-  <main class="min-h-screen bg-[#f5f7f8] text-zinc-950">
-    <section class="border-b border-zinc-200 bg-white">
-      <div class="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-10">
-        <div class="flex flex-col justify-center">
-          <div class="mb-7 max-w-3xl">
-            <p class="mb-3 inline-flex rounded-lg bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
-              Multi-market AI research
-            </p>
-            <h1 class="max-w-2xl text-4xl font-bold leading-tight text-zinc-950 sm:text-5xl">
-              Stock Analysis Agent
-            </h1>
-            <p class="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
-              Select NASDAQ, Borsa Istanbul, or another Yahoo Finance symbol and run one clean multi-agent analysis.
-            </p>
-          </div>
+  <div class="flex min-h-screen flex-col items-center gap-3 px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+    <!-- Spinner (centered overlay) -->
+    <LoadingSpinner v-if="store.isLoading" :symbol="store.lastSymbol" :message="store.loadingMessage" :steps="store.loadingSteps" />
 
-          <SymbolSearch :is-loading="store.isLoading" @analyze="handleAnalyze" />
+    <!-- Quick picks on initial state -->
+    <section v-if="!store.isLoading && !store.currentAnalysis" class="mx-auto w-full max-w-6xl pt-10">
+      <!-- Top absolute controls for homepage -->
+      <div class="absolute right-4 top-4 z-10 flex gap-2 sm:right-8 sm:top-8">
+        <div class="flex items-center rounded-lg border border-white/[0.08] bg-white/[0.04] p-0.5 text-xs font-semibold">
+          <button
+            class="rounded-md px-2 py-1.5 transition"
+            :class="store.language === 'en' ? 'bg-white/[0.1] text-white' : 'text-[var(--color-text-muted)] hover:text-white'"
+            @click="store.changeLanguage('en')"
+          >EN</button>
+          <button
+            class="rounded-md px-2 py-1.5 transition"
+            :class="store.language === 'tr' ? 'bg-white/[0.1] text-white' : 'text-[var(--color-text-muted)] hover:text-white'"
+            @click="store.changeLanguage('tr')"
+          >TR</button>
         </div>
-
-        <aside class="relative min-h-[360px] overflow-hidden rounded-lg bg-zinc-950 text-white shadow-sm">
-          <img
-            src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1400&q=80"
-            alt="Market terminal with price charts"
-            class="absolute inset-0 h-full w-full object-cover opacity-60"
-          />
-          <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/75 to-zinc-950/10" />
-          <div class="relative flex h-full min-h-[360px] flex-col justify-between p-6 sm:p-8">
-            <div>
-              <p class="text-sm font-semibold text-emerald-200">Coverage</p>
-              <h2 class="mt-3 max-w-md text-3xl font-bold leading-tight">
-                US tech, BIST 100, and global exchange suffixes.
-              </h2>
-            </div>
-
-            <div class="border-y border-white/25 py-2">
-              <div
-                v-for="item in coverageItems"
-                :key="item.label"
-                class="flex items-center justify-between gap-4 py-3 text-sm"
-              >
-                <span class="font-semibold text-white">{{ item.label }}</span>
-                <span class="text-right text-white/75">{{ item.symbols }}</span>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
+
+      <div class="mb-10 text-center">
+        <span class="badge badge-neutral mb-4 inline-flex text-[10px] tracking-widest">{{ t('nav.agent') }}</span>
+        <h1 class="text-3xl font-bold tracking-tight text-[var(--color-text)] sm:text-4xl">
+          {{ t('nav.market.overview') }}
+        </h1>
+        <p class="mt-3 text-sm leading-relaxed text-[var(--color-text-muted)]">
+          {{ t('nav.select.ticker') }}
+        </p>
+        <div class="mx-auto mt-6 flex max-w-md justify-center">
+          <SymbolSearch class="w-full" :is-loading="store.isLoading" compact @analyze="handleAnalyze" />
+        </div>
+      </div>
+      <StockScreenerList :is-loading="store.isLoading" @select="handleAnalyze" />
     </section>
 
-    <section class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <!-- Results -->
+    <template v-if="!store.isLoading && store.hasResult && store.currentAnalysis">
+      <!-- Sticky top bar with search + symbol aligned with 7xl container -->
+      <header class="sticky top-0 z-30 -mx-4 w-[calc(100%+2rem)] border-b border-white/[0.06] bg-[var(--color-bg)]/80 py-3 backdrop-blur-xl sm:-mx-6 sm:w-[calc(100%+3rem)] px-4 sm:px-6 lg:-mx-8 lg:w-[calc(100%+4rem)] lg:px-8">
+        <div class="mx-auto flex w-full max-w-7xl items-center gap-3">
+          <!-- Return to Homepage Button -->
+          <button 
+            @click="store.currentAnalysis = null" 
+            class="hidden shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] p-2 text-white hover:bg-white/[0.08] transition sm:flex mr-1"
+            title="Return to Homepage"
+          >
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </button>
+
+          <SymbolSearch :is-loading="store.isLoading" compact @analyze="handleAnalyze" />
+          
+          <div class="ml-auto flex items-center gap-2">
+            <!-- Mobile Return to Homepage Button -->
+            <button 
+              @click="store.currentAnalysis = null" 
+              class="flex sm:hidden shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] p-2 text-[var(--color-text-secondary)] hover:text-white transition"
+              title="Return to Homepage"
+            >
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </button>
+            
+            <!-- Language Toggle -->
+            <div class="flex items-center rounded-lg border border-white/[0.08] bg-white/[0.04] p-0.5 text-xs font-semibold">
+              <button
+                class="rounded-md px-2 py-1.5 transition"
+                :class="store.language === 'en' ? 'bg-white/[0.1] text-white' : 'text-[var(--color-text-muted)] hover:text-white'"
+                @click="store.changeLanguage('en')"
+              >EN</button>
+              <button
+                class="rounded-md px-2 py-1.5 transition"
+                :class="store.language === 'tr' ? 'bg-white/[0.1] text-white' : 'text-[var(--color-text-muted)] hover:text-white'"
+                @click="store.changeLanguage('tr')"
+              >TR</button>
+            </div>
+
+            <button
+              class="shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] transition hover:bg-white/[0.08] hover:text-white disabled:opacity-40"
+              :disabled="store.isLoading"
+              @click="store.refresh()"
+            >
+              {{ t('nav.refresh') }}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Error banner -->
       <div
         v-if="store.error"
-        class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        class="w-full max-w-7xl rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
       >
         {{ store.error }}
       </div>
 
-      <LoadingSpinner v-if="store.isLoading" :symbol="store.lastSymbol" />
-
-      <template v-else-if="store.hasResult && store.currentAnalysis">
-        <div
-          class="grid gap-6"
-          :class="store.recommendation ? 'lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]' : ''"
-        >
-          <div v-if="store.recommendation">
-            <RecommendationCard
-              :recommendation="store.recommendation"
-              :cached="store.isCached"
-            />
-          </div>
-
-          <div>
-            <div class="mb-4 flex flex-wrap gap-2 border-b border-zinc-200">
-              <button
-                v-for="tab in tabs"
-                :key="tab.id"
-                class="-mb-px border-b-2 px-4 py-3 text-sm font-semibold transition"
-                :class="
-                  activeTab === tab.id
-                    ? 'border-emerald-600 text-emerald-700'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-800'
-                "
-                @click="activeTab = tab.id"
-              >
-                {{ tab.label }}
-              </button>
-            </div>
-
-            <Transition name="fade" mode="out-in">
-              <TechnicalAnalysisPanel
-                v-if="activeTab === 'technical' && store.currentAnalysis.technical_analysis"
-                :analysis="store.currentAnalysis.technical_analysis"
-                :key="'technical'"
-              />
-              <NewsAnalysisPanel
-                v-else-if="activeTab === 'news' && store.currentAnalysis.news_analysis"
-                :analysis="store.currentAnalysis.news_analysis"
-                :key="'news'"
-              />
-              <RiskAnalysisPanel
-                v-else-if="activeTab === 'risk' && store.currentAnalysis.risk_analysis"
-                :analysis="store.currentAnalysis.risk_analysis"
-                :key="'risk'"
-              />
-            </Transition>
-
-            <div class="mt-6 flex justify-end">
-              <button
-                class="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
-                @click="store.refresh()"
-                :disabled="store.isLoading"
-              >
-                Refresh analysis
-              </button>
-            </div>
-          </div>
+      <div class="mx-auto w-full max-w-7xl">
+        <!-- Company Header + Recommendation -->
+        <div class="mb-4 grid gap-4 lg:grid-cols-[1fr_auto]">
+          <CompanyHeader
+            :profile="store.currentAnalysis.company_profile"
+            :recommendation="store.currentAnalysis.recommendation"
+          />
+          <RecommendationCard
+            v-if="store.currentAnalysis.recommendation"
+            :recommendation="store.currentAnalysis.recommendation"
+            :cached="store.isCached"
+          />
         </div>
-      </template>
 
-      <div
-        v-else-if="!store.isLoading && !store.currentAnalysis"
-        class="grid gap-5 lg:grid-cols-[0.85fr_1.15fr]"
-      >
-        <div>
-          <p class="text-lg font-semibold text-zinc-900">Ready for a symbol</p>
-          <p class="mt-2 max-w-xl text-sm leading-6 text-zinc-600">
-            Start with a NASDAQ ticker like NVDA, a Borsa Istanbul ticker like THYAO.IS, or any supported Yahoo Finance symbol.
-          </p>
-        </div>
-        <div class="grid gap-3 sm:grid-cols-3">
-          <div
-            v-for="item in emptyStateItems"
-            :key="item.label"
-            class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm"
-          >
-            <p class="text-sm font-semibold text-zinc-900">{{ item.label }}</p>
-            <p class="mt-2 text-sm leading-6 text-zinc-500">{{ item.copy }}</p>
-          </div>
+        <!-- Analysis Grid -->
+        <div class="grid gap-4 lg:grid-cols-2">
+          <TechnicalAnalysisPanel
+            v-if="store.currentAnalysis.technical_analysis"
+            :analysis="store.currentAnalysis.technical_analysis"
+          />
+          <RiskAnalysisPanel
+            v-if="store.currentAnalysis.risk_analysis"
+            :analysis="store.currentAnalysis.risk_analysis"
+          />
+          <NewsAnalysisPanel
+            v-if="store.currentAnalysis.news_analysis"
+            :analysis="store.currentAnalysis.news_analysis"
+          />
+          <FinancialsPanel
+            v-if="store.currentAnalysis.financial_statements"
+            :statements="store.currentAnalysis.financial_statements"
+            :symbol="store.currentAnalysis.symbol"
+          />
         </div>
       </div>
-    </section>
-  </main>
+
+      <!-- Chatbot FAB & Panel -->
+      <div v-if="store.hasResult" class="fixed z-40 transition-all duration-300" :class="isChatFullscreen ? 'inset-4 sm:inset-6 md:inset-10' : 'bottom-6 right-6'">
+        <!-- Always render button to keep layout simple, hide when chat is open -->
+        <button
+          v-if="!isChatOpen"
+          @click="isChatOpen = true"
+          class="flex items-center justify-center gap-2 rounded-full border border-green-500/30 bg-green-600 px-5 py-3.5 font-semibold text-white shadow-lg shadow-green-900/20 transition hover:bg-green-500 hover:scale-105"
+        >
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          {{ t('nav.ask.agent') }}
+        </button>
+        
+        <div v-if="isChatOpen" class="origin-bottom-right animate-in zoom-in-95 fade-in duration-200" :class="isChatFullscreen ? 'w-full h-full' : 'w-[380px] h-[600px] max-h-[calc(100vh-8rem)] max-w-[calc(100vw-2rem)]'">
+          <AnalysisChatbot
+            v-if="store.lastSymbol"
+            class="h-full w-full"
+            :symbol="store.lastSymbol"
+            :language="store.language"
+            @toggle-fullscreen="isChatFullscreen = !isChatFullscreen"
+            @close="isChatOpen = false"
+          />
+        </div>
+      </div>
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useAnalysisStore } from '@/stores/analysis'
+import { t } from '@/locales'
 import SymbolSearch from '@/components/SymbolSearch.vue'
+import StockScreenerList from '@/components/StockScreenerList.vue'
+import CompanyHeader from '@/components/CompanyHeader.vue'
 import RecommendationCard from '@/components/RecommendationCard.vue'
 import TechnicalAnalysisPanel from '@/components/TechnicalAnalysisPanel.vue'
 import NewsAnalysisPanel from '@/components/NewsAnalysisPanel.vue'
 import RiskAnalysisPanel from '@/components/RiskAnalysisPanel.vue'
+import FinancialsPanel from '@/components/FinancialsPanel.vue'
+import AnalysisChatbot from '@/components/AnalysisChatbot.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const store = useAnalysisStore()
-const activeTab = ref<'technical' | 'news' | 'risk'>('technical')
+const isChatOpen = ref(false)
+const isChatFullscreen = ref(false)
 
-const tabs = [
-  { id: 'technical' as const, label: 'Technical' },
-  { id: 'news' as const, label: 'News & Sentiment' },
-  { id: 'risk' as const, label: 'Risk' },
-]
-
-const coverageItems = [
-  { label: 'NASDAQ', symbols: 'AAPL, NVDA, MSFT' },
-  { label: 'Borsa Istanbul', symbols: 'THYAO.IS, GARAN.IS' },
-  { label: 'Other markets', symbols: 'BMW.DE, 7203.T' },
-]
-
-const emptyStateItems = [
-  { label: 'Choose market', copy: 'Pick NASDAQ, BIST, or the global symbol format.' },
-  { label: 'Enter ticker', copy: 'Use exchange suffixes when the market needs them.' },
-  { label: 'Run agents', copy: 'Technical, news, and risk analysis return together.' },
-]
+// Close chat automatically if user searches a different symbol
+watch(() => store.lastSymbol, () => {
+  isChatOpen.value = false
+})
 
 async function handleAnalyze(symbol: string) {
-  activeTab.value = 'technical'
   await store.analyzeSymbol(symbol)
 }
 </script>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
