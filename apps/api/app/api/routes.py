@@ -8,9 +8,11 @@ import redis.asyncio as aioredis
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 
+from apps.api.app.schemas.advisor import AdvisorRequest
 from apps.api.app.schemas.chat import ChatRequest
 from apps.api.app.schemas.request import AnalysisRequest
 from apps.api.app.schemas.response import AnalysisResponse
+from apps.api.app.services.advisor_service import AdvisorService
 from apps.api.app.services.analysis_service import AnalysisService
 from apps.api.app.services.chat_service import ChatService
 from packages.shared.config.settings import get_settings
@@ -170,6 +172,47 @@ async def chat_with_agent(
         message=request.message,
         history=request.history,
         timeframe=request.timeframe,
+        language=request.language,
+    )
+    return StreamingResponse(generator, media_type="text/event-stream")
+
+
+@router.get(
+    "/stocks/search",
+    summary="Search stocks by company name or ticker symbol",
+)
+async def search_stocks(q: str = "", limit: int = 10) -> list[dict]:
+    """Return matching stocks using yfinance search. Filters to EQUITY and ETF types only."""
+    import yfinance as yf  # noqa: PLC0415
+    if not q or len(q.strip()) < 2:
+        return []
+    try:
+        results = yf.Search(q.strip(), max_results=limit).quotes
+    except Exception as e:
+        logger.warning("Stock search failed for %r: %s", q, e)
+        return []
+    return [
+        {
+            "symbol": r["symbol"],
+            "name": r.get("longname") or r.get("shortname", ""),
+            "exchange": r.get("exchange", ""),
+        }
+        for r in results
+        if r.get("symbol") and r.get("quoteType") in {"EQUITY", "ETF"}
+    ]
+
+
+@router.post(
+    "/advisor",
+    summary="Portfolio advisor chat — general investment guidance without a specific symbol",
+)
+async def advisor_chat(request: AdvisorRequest) -> StreamingResponse:
+    """Stream investment advice based on user preferences and natural-language query."""
+    service = AdvisorService()
+    generator = service.stream_chat(
+        message=request.message,
+        history=request.history,
+        preferences=request.preferences,
         language=request.language,
     )
     return StreamingResponse(generator, media_type="text/event-stream")

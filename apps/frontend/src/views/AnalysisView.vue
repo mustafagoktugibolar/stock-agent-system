@@ -29,10 +29,25 @@
         <p class="mt-3 text-sm leading-relaxed text-[var(--color-text-muted)]">
           {{ t('nav.select.ticker') }}
         </p>
-        <div class="mx-auto mt-6 flex max-w-md justify-center">
+        <div class="mx-auto mt-6 flex max-w-md flex-col items-center gap-3">
           <SymbolSearch class="w-full" :is-loading="store.isLoading" compact @analyze="handleAnalyze" />
+          <button
+            class="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition hover:border-green-500/30 hover:bg-green-500/10 hover:text-green-400"
+            @click="isAdvisorOpen = !isAdvisorOpen"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            {{ t('advisor.open') }}
+          </button>
         </div>
       </div>
+
+      <!-- Portfolio Advisor panel -->
+      <div v-if="isAdvisorOpen" class="mx-auto mb-8 w-full max-w-2xl">
+        <PortfolioAdvisor @analyze="handleAnalyze" />
+      </div>
+
       <StockScreenerList :is-loading="store.isLoading" @select="handleAnalyze" />
     </section>
 
@@ -178,10 +193,12 @@ import RiskAnalysisPanel from '@/components/RiskAnalysisPanel.vue'
 import FinancialsPanel from '@/components/FinancialsPanel.vue'
 import AnalysisChatbot from '@/components/AnalysisChatbot.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import PortfolioAdvisor from '@/components/PortfolioAdvisor.vue'
 
 const store = useAnalysisStore()
 const isChatOpen = ref(false)
 const isChatFullscreen = ref(false)
+const isAdvisorOpen = ref(false)
 
 // Close chat automatically if user searches a different symbol
 watch(() => store.lastSymbol, () => {

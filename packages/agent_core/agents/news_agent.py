@@ -51,7 +51,11 @@ def news_agent(state: AgentState) -> dict[str, Any]:
     if label not in {"positive", "negative", "neutral"}:
         label = "positive" if score > 0.15 else "negative" if score < -0.15 else "neutral"
 
-    confidence = 0.75 if news_items and not sentiment_data.get("error") else 0.4
+    n = len(news_items)
+    if not sentiment_data.get("error"):
+        confidence = min(0.85, 0.45 + n * 0.04)
+    else:
+        confidence = min(0.55, 0.30 + n * 0.03)
     news_output = NewsOutput(
         symbol=symbol,
         timestamp=datetime.now(timezone.utc),

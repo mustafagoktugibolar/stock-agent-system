@@ -64,6 +64,8 @@ def technical_agent(state: AgentState) -> dict[str, Any]:
     current_price = indicators.get("symbol_price")
     ema20 = indicators.get("ema_20")
     ema50 = indicators.get("ema_50")
+    atr = indicators.get("atr")
+    adx = indicators.get("adx")
 
     rsi_signal = "neutral"
     if rsi is not None and rsi < 30:
@@ -102,12 +104,20 @@ def technical_agent(state: AgentState) -> dict[str, Any]:
     support, resistance = _support_resistance(ohlcv_json)
     price_change = indicators.get("price_change_pct")
     confidence = min(0.9, 0.55 + (abs(bullish - bearish) * 0.1))
+    if adx is not None:
+        if adx > 25:
+            confidence = min(0.9, confidence + 0.05)
+        elif adx < 15:
+            confidence = max(0.3, confidence - 0.05)
+
     summary = (
         f"{symbol} technical bias is {bias}. Latest close is "
         f"{safe_float(current_price, 0.0):.2f}"
     )
     if price_change is not None:
         summary += f" with a {safe_float(price_change, 0.0):.2f}% last-bar move."
+    if atr is not None:
+        summary += f" ATR(14): {safe_float(atr, 0.0):.2f}."
 
     technical_output = TechnicalOutput(
         symbol=symbol,
@@ -116,6 +126,7 @@ def technical_agent(state: AgentState) -> dict[str, Any]:
         overall_technical_bias=bias,  # type: ignore[arg-type]
         support_levels=support,
         resistance_levels=resistance,
+        atr=atr,
         summary=summary,
         confidence=confidence,
     )

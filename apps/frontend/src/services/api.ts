@@ -22,6 +22,7 @@ export interface TechnicalOutput {
   overall_technical_bias: 'bullish' | 'bearish' | 'neutral'
   support_levels: number[]
   resistance_levels: number[]
+  atr: number | null
   summary: string
   confidence: number
 }
@@ -94,6 +95,7 @@ export interface FinancialStatements {
   income_statement: FinancialLineItem[]
   cash_flow: FinancialLineItem[]
   periods: string[]
+  computed_ratios: Record<string, number | null>
 }
 
 export interface FinalRecommendation {
@@ -164,6 +166,58 @@ export type ChatMessageRole = 'user' | 'assistant'
 export interface ChatMessage {
   role: ChatMessageRole
   content: string
+}
+
+export interface StockSearchResult {
+  symbol: string
+  name: string
+  exchange: string
+}
+
+export interface UserPreferences {
+  riskTolerance: 'low' | 'medium' | 'high'
+  sectors: string[]
+  horizon: 'short' | 'medium' | 'long'
+}
+
+export async function searchStocks(q: string): Promise<StockSearchResult[]> {
+  const { data } = await client.get<StockSearchResult[]>('/api/v1/stocks/search', { params: { q, limit: 10 } })
+  return data
+}
+
+export async function* streamAdvisor(
+  message: string,
+  history: ChatMessage[],
+  preferences: UserPreferences,
+  language: string = 'en',
+): AsyncGenerator<string, void, unknown> {
+  const response = await fetch(`${client.defaults.baseURL}/api/v1/advisor`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message,
+      history,
+      preferences: {
+        risk_tolerance: preferences.riskTolerance,
+        sectors: preferences.sectors,
+        horizon: preferences.horizon,
+      },
+      language,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to connect to advisor stream')
+  }
+
+  const reader = response.body?.pipeThrough(new TextDecoderStream()).getReader()
+  if (!reader) throw new Error('No readable stream')
+
+  while (true) {
+    const { value, done } = await reader.read()
+    if (done) break
+    if (value) yield value
+  }
 }
 
 export async function* streamChat(

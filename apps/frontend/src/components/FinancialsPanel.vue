@@ -19,41 +19,68 @@
       </div>
     </div>
 
-    <!-- Periods header -->
-    <div
-      v-if="statements.periods.length"
-      class="mb-1 grid items-end gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]"
-      :style="gridStyle"
-    >
-      <span></span>
-      <span v-for="period in displayPeriods" :key="period" class="text-right">
-        {{ formatPeriod(period) }}
-      </span>
-    </div>
+    <!-- Key Ratios grid -->
+    <template v-if="activeTab === 'ratios'">
+      <div v-if="hasRatios" class="grid grid-cols-3 gap-2">
+        <div
+          v-for="ratio in ratioCards"
+          :key="ratio.key"
+          class="rounded-lg bg-white/[0.03] px-3 py-2.5"
+        >
+          <p class="mb-1 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">
+            {{ ratio.label }}
+          </p>
+          <p
+            class="text-base font-semibold tabular-nums leading-none"
+            :class="ratio.colorClass"
+          >
+            {{ ratio.display }}
+          </p>
+        </div>
+      </div>
+      <p v-else class="py-4 text-center text-xs text-[var(--color-text-muted)]">
+        {{ t('fin.no.data') }}
+      </p>
+    </template>
 
-    <!-- Rows -->
-    <div class="space-y-px">
+    <!-- Statement tables -->
+    <template v-else>
+      <!-- Periods header -->
       <div
-        v-for="item in activeItems"
-        :key="item.label"
-        class="grid items-center gap-2 rounded bg-white/[0.02] px-2 py-1.5 text-xs"
+        v-if="statements.periods.length"
+        class="mb-1 grid items-end gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]"
         :style="gridStyle"
       >
-        <span class="truncate text-[var(--color-text-secondary)]">{{ cleanLabel(item.label) }}</span>
-        <span
-          v-for="period in displayPeriods"
-          :key="period"
-          class="text-right font-semibold tabular-nums"
-          :class="valueColor(item.values[period])"
-        >
-          {{ formatValue(item.values[period]) }}
+        <span></span>
+        <span v-for="period in displayPeriods" :key="period" class="text-right">
+          {{ formatPeriod(period) }}
         </span>
       </div>
-    </div>
 
-    <p v-if="activeItems.length === 0" class="py-4 text-center text-xs text-[var(--color-text-muted)]">
-      {{ t('fin.no.data') }}
-    </p>
+      <!-- Rows -->
+      <div class="space-y-px">
+        <div
+          v-for="item in activeItems"
+          :key="item.label"
+          class="grid items-center gap-2 rounded bg-white/[0.02] px-2 py-1.5 text-xs"
+          :style="gridStyle"
+        >
+          <span class="truncate text-[var(--color-text-secondary)]">{{ cleanLabel(item.label) }}</span>
+          <span
+            v-for="period in displayPeriods"
+            :key="period"
+            class="text-right font-semibold tabular-nums"
+            :class="valueColor(item.values[period])"
+          >
+            {{ formatValue(item.values[period]) }}
+          </span>
+        </div>
+      </div>
+
+      <p v-if="activeItems.length === 0" class="py-4 text-center text-xs text-[var(--color-text-muted)]">
+        {{ t('fin.no.data') }}
+      </p>
+    </template>
   </div>
 </template>
 
@@ -67,15 +94,70 @@ const props = defineProps<{
   symbol: string
 }>()
 
-type TabId = 'balance' | 'income' | 'cashflow'
+type TabId = 'ratios' | 'balance' | 'income' | 'cashflow'
 
-const activeTab = ref<TabId>('balance')
+const activeTab = ref<TabId>('ratios')
 
 const tabs = [
+  { id: 'ratios' as const, labelKey: 'fin.ratios' },
   { id: 'balance' as const, labelKey: 'fin.balance' },
   { id: 'income' as const, labelKey: 'fin.income' },
   { id: 'cashflow' as const, labelKey: 'fin.cashflow' },
 ]
+
+// ── Ratio display config ───────────────────────────────────────────────────────
+
+interface RatioConfig {
+  key: string
+  label: string
+  format: 'pct' | 'ratio' | 'pct_raw'
+  higherIsBetter: boolean | null  // null = neutral (just show sign)
+}
+
+const RATIO_CONFIGS: RatioConfig[] = [
+  { key: 'gross_margin',         label: 'Gross Margin',     format: 'pct',     higherIsBetter: true },
+  { key: 'net_margin',           label: 'Net Margin',       format: 'pct',     higherIsBetter: true },
+  { key: 'roe',                  label: 'ROE',              format: 'pct',     higherIsBetter: true },
+  { key: 'roa',                  label: 'ROA',              format: 'pct',     higherIsBetter: true },
+  { key: 'fcf_margin',           label: 'FCF Margin',       format: 'pct',     higherIsBetter: true },
+  { key: 'current_ratio',        label: 'Current Ratio',    format: 'ratio',   higherIsBetter: true },
+  { key: 'debt_to_equity',       label: 'Debt / Equity',    format: 'ratio',   higherIsBetter: false },
+  { key: 'revenue_growth_yoy',   label: 'Rev. Growth YoY',  format: 'pct',     higherIsBetter: true },
+  { key: 'net_income_growth_yoy',label: 'NI Growth YoY',    format: 'pct',     higherIsBetter: true },
+]
+
+const hasRatios = computed(() =>
+  RATIO_CONFIGS.some(c => props.statements.computed_ratios?.[c.key] != null)
+)
+
+const ratioCards = computed(() =>
+  RATIO_CONFIGS
+    .filter(c => props.statements.computed_ratios?.[c.key] != null)
+    .map(c => {
+      const raw = props.statements.computed_ratios[c.key] as number
+      return {
+        key: c.key,
+        label: c.label,
+        display: formatRatio(raw, c.format),
+        colorClass: ratioColor(raw, c.higherIsBetter),
+      }
+    })
+)
+
+function formatRatio(value: number, format: RatioConfig['format']): string {
+  if (format === 'pct') return `${(value * 100).toFixed(1)}%`
+  if (format === 'ratio') return `${value.toFixed(2)}x`
+  return `${(value * 100).toFixed(1)}%`
+}
+
+function ratioColor(value: number, higherIsBetter: boolean | null): string {
+  if (higherIsBetter === null) return value >= 0 ? 'text-green-400' : 'text-red-400'
+  if (higherIsBetter) return value >= 0 ? 'text-green-400' : 'text-red-400'
+  // lower is better: positive value (e.g. high D/E) → warn
+  return value > 2 ? 'text-red-400' : value > 1 ? 'text-amber-400' : 'text-green-400'
+}
+
+// ── Statement table helpers ────────────────────────────────────────────────────
 
 const activeItems = computed((): FinancialLineItem[] => {
   switch (activeTab.value) {

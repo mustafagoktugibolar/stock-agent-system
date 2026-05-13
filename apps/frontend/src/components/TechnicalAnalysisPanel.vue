@@ -25,8 +25,8 @@
       </div>
     </div>
 
-    <!-- Support & Resistance -->
-    <div class="mb-3 flex gap-4 text-xs">
+    <!-- Support, Resistance & ATR -->
+    <div class="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
       <div v-if="analysis.support_levels.length">
         <span class="text-[var(--color-text-muted)]">{{ t('tech.support') }}</span>
         <span class="ml-1.5 font-semibold text-green-400">
@@ -38,6 +38,10 @@
         <span class="ml-1.5 font-semibold text-red-400">
           {{ analysis.resistance_levels.map(formatPrice).join(' · ') }}
         </span>
+      </div>
+      <div v-if="analysis.atr != null">
+        <span class="text-[var(--color-text-muted)]">{{ t('tech.atr') }}</span>
+        <span class="ml-1.5 font-semibold text-amber-400">{{ formatPrice(analysis.atr) }}</span>
       </div>
     </div>
 

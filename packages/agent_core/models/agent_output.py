@@ -22,6 +22,7 @@ class TechnicalOutput(BaseModel):
     overall_technical_bias: Literal["bullish", "bearish", "neutral"]
     support_levels: list[float]
     resistance_levels: list[float]
+    atr: Optional[float] = None
     summary: str
     confidence: float = Field(ge=0.0, le=1.0)
 
@@ -111,6 +112,7 @@ class FinancialStatements(BaseModel):
     income_statement: list[FinancialLineItem]
     cash_flow: list[FinancialLineItem]
     periods: list[str]
+    computed_ratios: dict[str, Optional[float]] = Field(default_factory=dict)
 
 
 class FinalRecommendation(BaseModel):

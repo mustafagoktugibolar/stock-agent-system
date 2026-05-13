@@ -34,6 +34,7 @@ export const messages: Translations = {
     'tech.title': 'Technical Analysis',
     'tech.support': 'Support',
     'tech.resistance': 'Resistance',
+    'tech.atr': 'ATR(14)',
 
     'news.title': 'News & Sentiment',
     'news.negative': 'Negative',
@@ -46,11 +47,23 @@ export const messages: Translations = {
     'fin.balance': 'Balance Sheet',
     'fin.income': 'Income',
     'fin.cashflow': 'Cash Flow',
+    'fin.ratios': 'Key Ratios',
     'fin.no.data': 'No data available.',
 
     'chat.placeholder': 'Ask a follow-up question...',
     'chat.context': 'Context: {symbol} Analysis',
-    
+
+    'advisor.title': 'Portfolio Advisor',
+    'advisor.open': 'Portfolio Advisor',
+    'advisor.welcome': 'Tell me your investment goals and I\'ll suggest specific stocks to analyze. Example: "What energy companies should I look at?" or "Give me a defensive dividend stock."',
+    'advisor.placeholder': 'Ask for investment ideas...',
+    'advisor.prefs.title': 'Your Preferences',
+    'advisor.prefs.risk': 'Risk Tolerance',
+    'advisor.prefs.sectors': 'Sectors of Interest',
+    'advisor.prefs.horizon': 'Investment Horizon',
+    'advisor.prefs.save': 'Save Preferences',
+    'advisor.analyze': 'Analyze',
+
     'val.buy': 'BUY',
     'val.sell': 'SELL',
     'val.hold': 'HOLD',
@@ -91,6 +104,7 @@ export const messages: Translations = {
     'tech.title': 'Teknik Analiz',
     'tech.support': 'Destek',
     'tech.resistance': 'Direnç',
+    'tech.atr': 'ATR(14)',
 
     'news.title': 'Haberler & Duygu',
     'news.negative': 'Negatif',
@@ -103,10 +117,22 @@ export const messages: Translations = {
     'fin.balance': 'Bilanço',
     'fin.income': 'Gelir Tablosu',
     'fin.cashflow': 'Nakit Akışı',
+    'fin.ratios': 'Temel Rasyolar',
     'fin.no.data': 'Veri bulunamadı.',
 
     'chat.placeholder': 'Ek bir soru sorun...',
     'chat.context': 'Bağlam: {symbol} Analizi',
+
+    'advisor.title': 'Portföy Danışmanı',
+    'advisor.open': 'Portföy Danışmanı',
+    'advisor.welcome': 'Yatırım hedeflerinizi anlatın, analiz edebileceğiniz hisseler önereceğim. Örnek: "Enerji sektöründe hangi şirkete bakmalıyım?" veya "Temettü veren savunmacı bir hisse öner."',
+    'advisor.placeholder': 'Yatırım fikri sorun...',
+    'advisor.prefs.title': 'Tercihleriniz',
+    'advisor.prefs.risk': 'Risk Toleransı',
+    'advisor.prefs.sectors': 'İlgi Alanı Sektörler',
+    'advisor.prefs.horizon': 'Yatırım Vadesi',
+    'advisor.prefs.save': 'Tercihleri Kaydet',
+    'advisor.analyze': 'Analiz Et',
 
     'val.buy': 'AL',
     'val.sell': 'SAT',
