@@ -112,7 +112,32 @@ class FinancialStatements(BaseModel):
     income_statement: list[FinancialLineItem]
     cash_flow: list[FinancialLineItem]
     periods: list[str]
+    period_type: Literal["quarterly", "annual"] = "annual"
+    annual_balance_sheet: list[FinancialLineItem] = Field(default_factory=list)
+    annual_income_statement: list[FinancialLineItem] = Field(default_factory=list)
+    annual_cash_flow: list[FinancialLineItem] = Field(default_factory=list)
+    annual_periods: list[str] = Field(default_factory=list)
+    quarterly_balance_sheet: list[FinancialLineItem] = Field(default_factory=list)
+    quarterly_income_statement: list[FinancialLineItem] = Field(default_factory=list)
+    quarterly_cash_flow: list[FinancialLineItem] = Field(default_factory=list)
+    quarterly_periods: list[str] = Field(default_factory=list)
     computed_ratios: dict[str, Optional[float]] = Field(default_factory=dict)
+
+
+class JudgeVerdict(BaseModel):
+    """LLM-as-a-judge assessment of a completed analysis run."""
+
+    model_config = ConfigDict(frozen=True)
+
+    symbol: str
+    timestamp: datetime
+    verdict: Literal["pass", "fail"]
+    overall_score: float = Field(ge=0.0, le=1.0)
+    coherence_score: float = Field(ge=0.0, le=1.0)
+    evidence_score: float = Field(ge=0.0, le=1.0)
+    risk_alignment_score: float = Field(ge=0.0, le=1.0)
+    critique: str
+    suggestions: list[str] = Field(default_factory=list)
 
 
 class FinalRecommendation(BaseModel):

@@ -256,11 +256,36 @@ class TestGraphCompilation:
         assert "news_agent" in node_names
         assert "risk_agent" in node_names
         assert "supervisor_agent" in node_names
+        assert "llm_judge" in node_names
+
+    def test_judge_runs_after_supervisor(self):
+        from packages.agent_core.orchestrator.graph import create_analysis_graph
+
+        graph = create_analysis_graph()
+        edges = {(e.source, e.target) for e in graph.get_graph().edges}
+        assert ("supervisor_agent", "llm_judge") in edges
+        assert ("llm_judge", "__end__") in edges
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Evaluator tests
 # ─────────────────────────────────────────────────────────────────────────────
+
+class TestLLMJudge:
+    def test_auto_fail_without_recommendation(self):
+        """The judge must fail the run without an LLM call when the supervisor produced nothing."""
+        from packages.agent_core.evaluation.llm_judge import llm_judge_agent
+
+        state = {
+            "symbol": "AAPL",
+            "final_recommendation": None,
+        }
+        result = llm_judge_agent(state)
+        verdict = result["judge_verdict"]
+        assert verdict.verdict == "fail"
+        assert verdict.overall_score == 0.0
+        assert result["current_agent"] == "llm_judge"
+
 
 class TestRecommendationEvaluator:
     def _make_recommendation(self, rec: str, confidence: float = 0.8) -> object:

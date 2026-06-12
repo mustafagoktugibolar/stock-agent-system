@@ -39,6 +39,7 @@ class AnalysisService:
             technical_analysis=state.get("technical_analysis"),
             news_analysis=state.get("news_analysis"),
             risk_analysis=state.get("risk_analysis"),
+            judge_verdict=state.get("judge_verdict"),
             errors=state.get("errors", []),
             cached=False,
         )
@@ -123,6 +124,7 @@ class AnalysisService:
             "company_profile": None,
             "financial_statements": None,
             "final_recommendation": None,
+            "judge_verdict": None,
             "current_agent": "start",
             "errors": [],
         }

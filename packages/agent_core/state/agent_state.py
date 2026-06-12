@@ -8,6 +8,7 @@ from packages.agent_core.models.agent_output import (
     CompanyProfile,
     FinalRecommendation,
     FinancialStatements,
+    JudgeVerdict,
     NewsOutput,
     RiskOutput,
     TechnicalOutput,
@@ -35,6 +36,7 @@ class AgentState(TypedDict):
     company_profile: Optional[CompanyProfile]
     financial_statements: Optional[FinancialStatements]
     final_recommendation: Optional[FinalRecommendation]
+    judge_verdict: Optional[JudgeVerdict]
 
     # ── Control ───────────────────────────────────────────────────────────────
     current_agent: str

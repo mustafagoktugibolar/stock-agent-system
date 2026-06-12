@@ -141,6 +141,33 @@ def fundamentals_agent(state: AgentState) -> dict[str, Any]:
                 for item in fin_data.get("cash_flow", [])
             ],
             periods=fin_data.get("periods", []),
+            period_type=fin_data.get("period_type", "annual"),
+            annual_balance_sheet=[
+                FinancialLineItem(label=item["label"], values=item["values"])
+                for item in fin_data.get("annual_balance_sheet", [])
+            ],
+            annual_income_statement=[
+                FinancialLineItem(label=item["label"], values=item["values"])
+                for item in fin_data.get("annual_income_statement", [])
+            ],
+            annual_cash_flow=[
+                FinancialLineItem(label=item["label"], values=item["values"])
+                for item in fin_data.get("annual_cash_flow", [])
+            ],
+            annual_periods=fin_data.get("annual_periods", []),
+            quarterly_balance_sheet=[
+                FinancialLineItem(label=item["label"], values=item["values"])
+                for item in fin_data.get("quarterly_balance_sheet", [])
+            ],
+            quarterly_income_statement=[
+                FinancialLineItem(label=item["label"], values=item["values"])
+                for item in fin_data.get("quarterly_income_statement", [])
+            ],
+            quarterly_cash_flow=[
+                FinancialLineItem(label=item["label"], values=item["values"])
+                for item in fin_data.get("quarterly_cash_flow", [])
+            ],
+            quarterly_periods=fin_data.get("quarterly_periods", []),
             computed_ratios=_compute_ratios(fin_data),
         )
         logger.info(

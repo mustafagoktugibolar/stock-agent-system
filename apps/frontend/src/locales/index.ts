@@ -31,6 +31,17 @@ export const messages: Translations = {
     'rec.low': 'Low conviction',
     'rec.cached': 'Cached',
 
+    'judge.title': 'LLM Judge',
+    'judge.subtitle': 'Independent evaluation of this recommendation',
+    'judge.pass': 'PASS',
+    'judge.fail': 'FAIL',
+    'judge.overall': 'Overall',
+    'judge.coherence': 'Coherence',
+    'judge.evidence': 'Evidence',
+    'judge.risk.alignment': 'Risk Alignment',
+    'judge.critique': 'Critique',
+    'judge.suggestions': 'Suggestions',
+
     'tech.title': 'Technical Analysis',
     'tech.support': 'Support',
     'tech.resistance': 'Resistance',
@@ -48,6 +59,8 @@ export const messages: Translations = {
     'fin.income': 'Income',
     'fin.cashflow': 'Cash Flow',
     'fin.ratios': 'Key Ratios',
+    'fin.quarterly': 'Quarterly',
+    'fin.annual': 'Annual',
     'fin.no.data': 'No data available.',
 
     'chat.placeholder': 'Ask a follow-up question...',
@@ -101,6 +114,17 @@ export const messages: Translations = {
     'rec.low': 'Düşük güven seviyesi',
     'rec.cached': 'Önbellekten (Cached)',
 
+    'judge.title': 'LLM Hakem',
+    'judge.subtitle': 'Bu tavsiyenin bağımsız değerlendirmesi',
+    'judge.pass': 'GEÇTİ',
+    'judge.fail': 'KALDI',
+    'judge.overall': 'Genel',
+    'judge.coherence': 'Tutarlılık',
+    'judge.evidence': 'Kanıt',
+    'judge.risk.alignment': 'Risk Uyumu',
+    'judge.critique': 'Değerlendirme',
+    'judge.suggestions': 'Öneriler',
+
     'tech.title': 'Teknik Analiz',
     'tech.support': 'Destek',
     'tech.resistance': 'Direnç',
@@ -118,6 +142,8 @@ export const messages: Translations = {
     'fin.income': 'Gelir Tablosu',
     'fin.cashflow': 'Nakit Akışı',
     'fin.ratios': 'Temel Rasyolar',
+    'fin.quarterly': 'Çeyreklik',
+    'fin.annual': 'Yıllık',
     'fin.no.data': 'Veri bulunamadı.',
 
     'chat.placeholder': 'Ek bir soru sorun...',

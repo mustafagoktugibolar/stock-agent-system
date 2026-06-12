@@ -121,10 +121,11 @@ def fetch_company_profile(symbol: str) -> str:
 
 @tool
 def fetch_financial_statements(symbol: str) -> str:
-    """Fetch annual financial statements for a stock symbol.
+    """Fetch financial statements for a stock symbol.
 
-    Returns key line items from the balance sheet, income statement,
-    and cash flow statement (latest 4 annual periods).
+    Returns key line items from annual and quarterly balance sheet, income
+    statement, and cash flow data. Top-level statement fields prefer quarterly
+    data when available so the UI shows the freshest reported quarter first.
 
     Args:
         symbol: Stock ticker symbol, e.g. 'AAPL', 'MSFT'.
@@ -138,19 +139,32 @@ def fetch_financial_statements(symbol: str) -> str:
 
     try:
         ticker = yf.Ticker(symbol)
-        bs = ticker.balance_sheet
-        inc = ticker.financials
-        cf = ticker.cashflow
+        annual_bs = ticker.balance_sheet
+        annual_inc = ticker.financials
+        annual_cf = ticker.cashflow
+        quarterly_bs = ticker.quarterly_balance_sheet
+        quarterly_inc = ticker.quarterly_financials
+        quarterly_cf = ticker.quarterly_cashflow
     except Exception as e:
         logger.error("Failed to fetch financials for %s: %s", symbol, e)
         return json.dumps({"symbol": symbol, "error": str(e)})
 
-    balance_sheet, bs_periods = _extract_rows(bs, _BALANCE_SHEET_KEYS)
-    income_statement, inc_periods = _extract_rows(inc, _INCOME_STATEMENT_KEYS)
-    cash_flow, cf_periods = _extract_rows(cf, _CASH_FLOW_KEYS)
+    annual_balance_sheet, annual_bs_periods = _extract_rows(annual_bs, _BALANCE_SHEET_KEYS)
+    annual_income_statement, annual_inc_periods = _extract_rows(annual_inc, _INCOME_STATEMENT_KEYS)
+    annual_cash_flow, annual_cf_periods = _extract_rows(annual_cf, _CASH_FLOW_KEYS)
+    annual_periods = annual_bs_periods or annual_inc_periods or annual_cf_periods
 
-    # Use the longest available period list as canonical
-    periods = bs_periods or inc_periods or cf_periods
+    quarterly_balance_sheet, quarterly_bs_periods = _extract_rows(quarterly_bs, _BALANCE_SHEET_KEYS)
+    quarterly_income_statement, quarterly_inc_periods = _extract_rows(quarterly_inc, _INCOME_STATEMENT_KEYS)
+    quarterly_cash_flow, quarterly_cf_periods = _extract_rows(quarterly_cf, _CASH_FLOW_KEYS)
+    quarterly_periods = quarterly_bs_periods or quarterly_inc_periods or quarterly_cf_periods
+
+    has_quarterly = bool(quarterly_periods)
+    period_type = "quarterly" if has_quarterly else "annual"
+    balance_sheet = quarterly_balance_sheet if has_quarterly else annual_balance_sheet
+    income_statement = quarterly_income_statement if has_quarterly else annual_income_statement
+    cash_flow = quarterly_cash_flow if has_quarterly else annual_cash_flow
+    periods = quarterly_periods if has_quarterly else annual_periods
 
     return json.dumps({
         "symbol": symbol,
@@ -158,4 +172,13 @@ def fetch_financial_statements(symbol: str) -> str:
         "income_statement": income_statement,
         "cash_flow": cash_flow,
         "periods": periods,
+        "period_type": period_type,
+        "annual_balance_sheet": annual_balance_sheet,
+        "annual_income_statement": annual_income_statement,
+        "annual_cash_flow": annual_cash_flow,
+        "annual_periods": annual_periods,
+        "quarterly_balance_sheet": quarterly_balance_sheet,
+        "quarterly_income_statement": quarterly_income_statement,
+        "quarterly_cash_flow": quarterly_cash_flow,
+        "quarterly_periods": quarterly_periods,
     })

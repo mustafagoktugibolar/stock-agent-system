@@ -9,6 +9,11 @@ const router = createRouter({
       name: 'analysis',
       component: AnalysisView,
     },
+    {
+      path: '/trading',
+      name: 'trading',
+      component: () => import('@/views/TradingView.vue'),
+    },
   ],
 })
 

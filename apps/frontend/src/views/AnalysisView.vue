@@ -102,6 +102,17 @@
             >
               {{ t('nav.refresh') }}
             </button>
+
+            <button
+              class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-400 transition hover:border-blue-500/50 hover:bg-blue-500/20"
+              @click="goToTrading()"
+              title="Go to Trading Dashboard with this analysis"
+            >
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span class="hidden sm:inline">Trade</span>
+            </button>
           </div>
         </div>
       </header>
@@ -148,6 +159,12 @@
             :symbol="store.currentAnalysis.symbol"
           />
         </div>
+
+        <JudgeVerdictCard
+          v-if="store.currentAnalysis.judge_verdict"
+          class="mt-4"
+          :verdict="store.currentAnalysis.judge_verdict"
+        />
       </div>
 
       <!-- Chatbot FAB & Panel -->
@@ -181,7 +198,9 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAnalysisStore } from '@/stores/analysis'
+import { useTradingStore } from '@/stores/trading'
 import { t } from '@/locales'
 import SymbolSearch from '@/components/SymbolSearch.vue'
 import StockScreenerList from '@/components/StockScreenerList.vue'
@@ -191,11 +210,25 @@ import TechnicalAnalysisPanel from '@/components/TechnicalAnalysisPanel.vue'
 import NewsAnalysisPanel from '@/components/NewsAnalysisPanel.vue'
 import RiskAnalysisPanel from '@/components/RiskAnalysisPanel.vue'
 import FinancialsPanel from '@/components/FinancialsPanel.vue'
+import JudgeVerdictCard from '@/components/JudgeVerdictCard.vue'
 import AnalysisChatbot from '@/components/AnalysisChatbot.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import PortfolioAdvisor from '@/components/PortfolioAdvisor.vue'
 
 const store = useAnalysisStore()
+const router = useRouter()
+const tradingStore = useTradingStore()
+
+async function goToTrading() {
+  const symbol = store.lastSymbol
+  if (symbol) {
+    await tradingStore.addSymbol(symbol)
+    if (tradingStore.status?.running) {
+      tradingStore.runCycleNow()
+    }
+  }
+  router.push('/trading')
+}
 const isChatOpen = ref(false)
 const isChatFullscreen = ref(false)
 const isAdvisorOpen = ref(false)

@@ -57,8 +57,10 @@ app.add_middleware(
 )
 
 from apps.api.app.api.routes import router  # noqa: E402
+from apps.api.app.api.trader_routes import router as trader_router  # noqa: E402
 
 app.include_router(router)
+app.include_router(trader_router)
 
 
 @app.get("/health", tags=["system"])

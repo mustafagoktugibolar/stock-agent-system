@@ -9,6 +9,7 @@ from packages.agent_core.agents.news_agent import news_agent
 from packages.agent_core.agents.risk_agent import risk_agent
 from packages.agent_core.agents.supervisor_agent import supervisor_agent
 from packages.agent_core.agents.technical_agent import technical_agent
+from packages.agent_core.evaluation.llm_judge import llm_judge_agent
 from packages.agent_core.state.agent_state import AgentState
 
 # ── Graph definition ──────────────────────────────────────────────────────────
@@ -17,7 +18,7 @@ def create_analysis_graph():
     """Build and compile the stock analysis StateGraph.
 
     Flow:
-        START → technical/news/risk/fundamentals (parallel) → supervisor → END
+        START → technical/news/risk/fundamentals (parallel) → supervisor → llm_judge → END
 
     Each node is a plain function (AgentState) -> dict that returns a partial
     state update.  Errors in any node are collected in state["errors"].
@@ -30,6 +31,7 @@ def create_analysis_graph():
     builder.add_node("risk_agent", risk_agent)
     builder.add_node("fundamentals_agent", fundamentals_agent)
     builder.add_node("supervisor_agent", supervisor_agent)
+    builder.add_node("llm_judge", llm_judge_agent)
 
     # ── Edges (parallel) ────────────────────────────────────────────────────
     # Run all four specialist agents in parallel from START,
@@ -45,7 +47,10 @@ def create_analysis_graph():
         "supervisor_agent",
     )
 
-    builder.add_edge("supervisor_agent", END)
+    # LLM-in-the-loop evaluation: an independent judge reviews the
+    # supervisor's recommendation before the run completes.
+    builder.add_edge("supervisor_agent", "llm_judge")
+    builder.add_edge("llm_judge", END)
 
     return builder.compile()
 

@@ -7,6 +7,7 @@ from packages.agent_core.models.agent_output import (
     CompanyProfile,
     FinalRecommendation,
     FinancialStatements,
+    JudgeVerdict,
     NewsOutput,
     RiskOutput,
     TechnicalOutput,
@@ -25,6 +26,7 @@ class AnalysisResponse(BaseModel):
     technical_analysis: Optional[TechnicalOutput] = None
     news_analysis: Optional[NewsOutput] = None
     risk_analysis: Optional[RiskOutput] = None
+    judge_verdict: Optional[JudgeVerdict] = None
     errors: list[str] = Field(default_factory=list)
     cached: bool = False
 

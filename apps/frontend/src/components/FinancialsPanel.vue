@@ -2,20 +2,37 @@
   <div class="card">
     <div class="card-header">
       <span class="card-title">{{ t('fin.title') }}</span>
-      <div class="flex gap-1">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          class="rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition"
-          :class="
-            activeTab === tab.id
-              ? 'bg-white/[0.08] text-white'
-              : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
-          "
-          @click="activeTab = tab.id"
-        >
-          {{ t(tab.labelKey) }}
-        </button>
+      <div class="flex flex-wrap justify-end gap-2">
+        <div v-if="availableStatementModes.length > 1" class="flex gap-1">
+          <button
+            v-for="mode in availableStatementModes"
+            :key="mode.id"
+            class="rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition"
+            :class="
+              statementMode === mode.id
+                ? 'bg-emerald-500/15 text-emerald-300'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+            "
+            @click="statementMode = mode.id"
+          >
+            {{ mode.label }}
+          </button>
+        </div>
+        <div class="flex gap-1">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            class="rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition"
+            :class="
+              activeTab === tab.id
+                ? 'bg-white/[0.08] text-white'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+            "
+            @click="activeTab = tab.id"
+          >
+            {{ t(tab.labelKey) }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -47,7 +64,7 @@
     <template v-else>
       <!-- Periods header -->
       <div
-        v-if="statements.periods.length"
+        v-if="displayPeriods.length"
         class="mb-1 grid items-end gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]"
         :style="gridStyle"
       >
@@ -85,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { FinancialStatements, FinancialLineItem } from '@/services/api'
 import { t } from '@/locales'
 
@@ -97,6 +114,7 @@ const props = defineProps<{
 type TabId = 'ratios' | 'balance' | 'income' | 'cashflow'
 
 const activeTab = ref<TabId>('ratios')
+type StatementMode = 'quarterly' | 'annual'
 
 const tabs = [
   { id: 'ratios' as const, labelKey: 'fin.ratios' },
@@ -104,6 +122,55 @@ const tabs = [
   { id: 'income' as const, labelKey: 'fin.income' },
   { id: 'cashflow' as const, labelKey: 'fin.cashflow' },
 ]
+
+const hasQuarterly = computed(() => Boolean(props.statements.quarterly_periods?.length))
+const hasAnnual = computed(() => Boolean(props.statements.annual_periods?.length))
+
+function defaultStatementMode(): StatementMode {
+  if (props.statements.period_type === 'quarterly' || hasQuarterly.value) return 'quarterly'
+  return 'annual'
+}
+
+const statementMode = ref<StatementMode>(defaultStatementMode())
+
+watch(
+  () => props.statements.symbol,
+  () => {
+    statementMode.value = defaultStatementMode()
+  }
+)
+
+const availableStatementModes = computed(() => {
+  const modes: { id: StatementMode; label: string }[] = []
+  if (hasQuarterly.value) modes.push({ id: 'quarterly', label: t('fin.quarterly') })
+  if (hasAnnual.value) modes.push({ id: 'annual', label: t('fin.annual') })
+  return modes
+})
+
+const activeStatementSet = computed(() => {
+  if (statementMode.value === 'annual' && hasAnnual.value) {
+    return {
+      balance_sheet: props.statements.annual_balance_sheet ?? [],
+      income_statement: props.statements.annual_income_statement ?? [],
+      cash_flow: props.statements.annual_cash_flow ?? [],
+      periods: props.statements.annual_periods ?? [],
+    }
+  }
+  if (hasQuarterly.value) {
+    return {
+      balance_sheet: props.statements.quarterly_balance_sheet ?? [],
+      income_statement: props.statements.quarterly_income_statement ?? [],
+      cash_flow: props.statements.quarterly_cash_flow ?? [],
+      periods: props.statements.quarterly_periods ?? [],
+    }
+  }
+  return {
+    balance_sheet: props.statements.balance_sheet,
+    income_statement: props.statements.income_statement,
+    cash_flow: props.statements.cash_flow,
+    periods: props.statements.periods,
+  }
+})
 
 // ── Ratio display config ───────────────────────────────────────────────────────
 
@@ -161,14 +228,14 @@ function ratioColor(value: number, higherIsBetter: boolean | null): string {
 
 const activeItems = computed((): FinancialLineItem[] => {
   switch (activeTab.value) {
-    case 'balance': return props.statements.balance_sheet
-    case 'income': return props.statements.income_statement
-    case 'cashflow': return props.statements.cash_flow
+    case 'balance': return activeStatementSet.value.balance_sheet
+    case 'income': return activeStatementSet.value.income_statement
+    case 'cashflow': return activeStatementSet.value.cash_flow
     default: return []
   }
 })
 
-const displayPeriods = computed(() => props.statements.periods.slice(0, 4))
+const displayPeriods = computed(() => activeStatementSet.value.periods.slice(0, 4))
 
 const gridStyle = computed(() => ({
   gridTemplateColumns: `minmax(140px, 1fr) ${displayPeriods.value.map(() => 'minmax(70px, 1fr)').join(' ')}`,
@@ -177,7 +244,11 @@ const gridStyle = computed(() => ({
 function formatPeriod(period: string): string {
   const d = new Date(period)
   if (isNaN(d.getTime())) return period
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+  if (statementMode.value === 'quarterly') {
+    const quarter = Math.floor(d.getUTCMonth() / 3) + 1
+    return `Q${quarter} ${d.getUTCFullYear()}`
+  }
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', timeZone: 'UTC' })
 }
 
 function cleanLabel(label: string): string {
