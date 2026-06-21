@@ -14,8 +14,8 @@ from typing import Any
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
-from packages.agent_core.models.agent_output import JudgeVerdict
-from packages.agent_core.state.agent_state import AgentState
+from packages.analysis_agent.models.agent_output import JudgeVerdict
+from packages.analysis_agent.state.agent_state import AgentState
 from packages.shared.config.settings import get_settings
 from packages.shared.logging.logger import get_logger
 

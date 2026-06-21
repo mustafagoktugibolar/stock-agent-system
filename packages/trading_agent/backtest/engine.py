@@ -21,8 +21,8 @@ from typing import Any, Callable, Optional
 
 import httpx
 
-from packages.agent_core.tools.indicators import calculate_technical_indicators
-from packages.agent_core.tools.risk_metrics import calculate_risk_metrics
+from packages.analysis_agent.tools.indicators import calculate_technical_indicators
+from packages.analysis_agent.tools.risk_metrics import calculate_risk_metrics
 from packages.shared.config.settings import get_settings
 from packages.shared.logging.logger import get_logger
 from packages.trading_agent.agents.market_observer_agent import (

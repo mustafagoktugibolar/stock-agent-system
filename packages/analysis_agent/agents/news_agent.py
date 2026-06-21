@@ -4,10 +4,10 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
-from packages.agent_core.models.agent_output import NewsItem, NewsOutput
-from packages.agent_core.state.agent_state import AgentState
-from packages.agent_core.tools.news_fetcher import fetch_recent_news
-from packages.agent_core.tools.sentiment import analyze_news_sentiment
+from packages.analysis_agent.models.agent_output import NewsItem, NewsOutput
+from packages.analysis_agent.state.agent_state import AgentState
+from packages.analysis_agent.tools.news_fetcher import fetch_recent_news
+from packages.analysis_agent.tools.sentiment import analyze_news_sentiment
 from packages.shared.logging.logger import get_logger
 
 logger = get_logger(__name__)

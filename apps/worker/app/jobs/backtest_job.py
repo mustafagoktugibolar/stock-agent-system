@@ -6,9 +6,9 @@ from typing import Optional
 
 import redis.asyncio as aioredis
 
-from packages.agent_core.evaluation.evaluator import RecommendationEvaluator
-from packages.agent_core.models.agent_output import FinalRecommendation
-from packages.agent_core.tools.market_data import fetch_ohlcv
+from packages.analysis_agent.evaluation.evaluator import RecommendationEvaluator
+from packages.analysis_agent.models.agent_output import FinalRecommendation
+from packages.analysis_agent.tools.market_data import fetch_ohlcv
 from packages.shared.logging.logger import get_logger
 
 logger = get_logger(__name__)

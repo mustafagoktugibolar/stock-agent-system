@@ -1,7 +1,7 @@
 """Alpaca paper trading API tools.
 
 All functions are synchronous LangChain @tool wrappers, consistent with the
-existing tool pattern in packages/agent_core/tools/. Uses the alpaca-py SDK
+existing tool pattern in packages/analysis_agent/tools/. Uses the alpaca-py SDK
 (TradingClient) with paper=True.
 """
 

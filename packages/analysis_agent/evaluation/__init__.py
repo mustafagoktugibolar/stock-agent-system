@@ -1,9 +1,9 @@
-from packages.agent_core.evaluation.evaluator import (
+from packages.analysis_agent.evaluation.evaluator import (
     AccuracyScore,
     ConsistencyScore,
     RecommendationEvaluator,
 )
-from packages.agent_core.evaluation.llm_judge import llm_judge_agent
+from packages.analysis_agent.evaluation.llm_judge import llm_judge_agent
 
 __all__ = [
     "AccuracyScore",

@@ -4,7 +4,7 @@ from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
 from typing_extensions import TypedDict
 
-from packages.agent_core.models.agent_output import (
+from packages.analysis_agent.models.agent_output import (
     CompanyProfile,
     FinalRecommendation,
     FinancialStatements,

@@ -9,8 +9,8 @@ import json
 
 import redis.asyncio as aioredis
 
-from packages.agent_core.tools.indicators import calculate_technical_indicators
-from packages.agent_core.tools.market_data import fetch_ohlcv
+from packages.analysis_agent.tools.indicators import calculate_technical_indicators
+from packages.analysis_agent.tools.market_data import fetch_ohlcv
 from packages.shared.config.settings import get_settings
 from packages.shared.logging.logger import get_logger
 

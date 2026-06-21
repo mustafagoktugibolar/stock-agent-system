@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from packages.agent_core.models.agent_output import FinalRecommendation
+from packages.analysis_agent.models.agent_output import FinalRecommendation
 
 
 # ─────────────────────────────────────────────────────────────────────────────

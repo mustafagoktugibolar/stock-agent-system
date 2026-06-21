@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 from statistics import mean, stdev
 from typing import Optional
 
-from packages.agent_core.models.agent_output import FinalRecommendation
-from packages.agent_core.state.agent_state import AgentState
+from packages.analysis_agent.models.agent_output import FinalRecommendation
+from packages.analysis_agent.state.agent_state import AgentState
 from packages.shared.logging.logger import get_logger
 
 logger = get_logger(__name__)

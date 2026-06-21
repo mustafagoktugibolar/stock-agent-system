@@ -10,11 +10,11 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
-from packages.agent_core.tools.indicators import calculate_technical_indicators
-from packages.agent_core.tools.market_data import fetch_ohlcv
-from packages.agent_core.tools.news_fetcher import fetch_recent_news
-from packages.agent_core.tools.risk_metrics import calculate_risk_metrics
-from packages.agent_core.tools.sentiment import analyze_news_sentiment
+from packages.analysis_agent.tools.indicators import calculate_technical_indicators
+from packages.analysis_agent.tools.market_data import fetch_ohlcv
+from packages.analysis_agent.tools.news_fetcher import fetch_recent_news
+from packages.analysis_agent.tools.risk_metrics import calculate_risk_metrics
+from packages.analysis_agent.tools.sentiment import analyze_news_sentiment
 from packages.shared.logging.logger import get_logger
 from packages.trading_agent.models.trading_output import ObservationOutput
 from packages.trading_agent.state.trading_state import TradingState
@@ -52,7 +52,7 @@ def _safe_float(val: Any, default: float | None = None) -> float | None:
 def market_observer_agent(state: TradingState) -> dict[str, Any]:
     """LangGraph node: assembles a full observation snapshot for state['symbol'].
 
-    Purely deterministic — no LLM calls. Reuses all existing agent_core tools.
+    Purely deterministic — no LLM calls. Reuses all existing analysis_agent tools.
     Returns partial TradingState update with 'observation', 'market_regime',
     and 'portfolio_state' keys.
     """

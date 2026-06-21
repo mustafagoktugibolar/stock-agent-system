@@ -4,10 +4,10 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
-from packages.agent_core.models.agent_output import RiskMetric, RiskOutput
-from packages.agent_core.state.agent_state import AgentState
-from packages.agent_core.tools.market_data import fetch_ohlcv
-from packages.agent_core.tools.risk_metrics import calculate_risk_metrics
+from packages.analysis_agent.models.agent_output import RiskMetric, RiskOutput
+from packages.analysis_agent.state.agent_state import AgentState
+from packages.analysis_agent.tools.market_data import fetch_ohlcv
+from packages.analysis_agent.tools.risk_metrics import calculate_risk_metrics
 from packages.shared.logging.logger import get_logger
 from packages.shared.utils.helpers import safe_float
 

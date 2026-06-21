@@ -4,7 +4,7 @@ import asyncio
 
 import redis.asyncio as aioredis
 
-from packages.agent_core.tools.news_fetcher import fetch_recent_news
+from packages.analysis_agent.tools.news_fetcher import fetch_recent_news
 from packages.shared.logging.logger import get_logger
 
 logger = get_logger(__name__)

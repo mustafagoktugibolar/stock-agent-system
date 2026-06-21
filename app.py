@@ -14,8 +14,8 @@ from typing import Any, Optional
 
 import gradio as gr
 
-from packages.agent_core.orchestrator.graph import get_analysis_graph
-from packages.agent_core.state.agent_state import AgentState
+from packages.analysis_agent.orchestrator.graph import get_analysis_graph
+from packages.analysis_agent.state.agent_state import AgentState
 
 _REC_COLORS = {"BUY": "#16a34a", "HOLD": "#ca8a04", "SELL": "#dc2626"}
 _VERDICT_COLORS = {"pass": "#16a34a", "fail": "#dc2626"}
@@ -28,7 +28,7 @@ def _confidence_bar(value: float) -> str:
 
 def _recommendation_md(rec: Optional[Any]) -> str:
     if rec is None:
-        return "### ⚠️ No recommendation produced\nCheck the Errors tab."
+        return "### No recommendation produced\nCheck the Errors tab."
     color = _REC_COLORS.get(rec.recommendation, "#6b7280")
     lines = [
         f"## <span style='color:{color}'>{rec.recommendation}</span> — {rec.symbol}",
@@ -45,7 +45,7 @@ def _recommendation_md(rec: Optional[Any]) -> str:
 
 def _judge_md(verdict: Optional[Any]) -> str:
     if verdict is None:
-        return "### ⚠️ Judge did not run"
+        return "### Judge did not run"
     color = _VERDICT_COLORS.get(verdict.verdict, "#6b7280")
     lines = [
         f"## Judge verdict: <span style='color:{color}'>{verdict.verdict.upper()}</span>",
@@ -165,7 +165,7 @@ def run_analysis(symbol: str, language: str):
 
 with gr.Blocks(title="Multi-Agent Stock Analyst") as demo:
     gr.Markdown(
-        "# 📈 Multi-Agent Stock Analysis System\n"
+        "# Multi-Agent Stock Analysis System\n"
         "Four specialist AI agents (technical, news, risk, fundamentals) analyze a stock "
         "in parallel, a supervisor agent synthesizes a recommendation, and an independent "
         "**LLM judge** evaluates whether that recommendation is well-founded.\n\n"

@@ -4,13 +4,13 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
-from packages.agent_core.models.agent_output import (
+from packages.analysis_agent.models.agent_output import (
     CompanyProfile,
     FinancialLineItem,
     FinancialStatements,
 )
-from packages.agent_core.state.agent_state import AgentState
-from packages.agent_core.tools.company_info import (
+from packages.analysis_agent.state.agent_state import AgentState
+from packages.analysis_agent.tools.company_info import (
     fetch_company_profile,
     fetch_financial_statements,
 )

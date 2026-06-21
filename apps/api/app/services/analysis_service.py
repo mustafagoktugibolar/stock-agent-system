@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 import redis.asyncio as aioredis
 
 from apps.api.app.schemas.response import AnalysisResponse
-from packages.agent_core.orchestrator.graph import get_analysis_graph
-from packages.agent_core.state.agent_state import AgentState
+from packages.analysis_agent.orchestrator.graph import get_analysis_graph
+from packages.analysis_agent.state.agent_state import AgentState
 from packages.shared.config.settings import get_settings
 from packages.shared.db.models.analysis import Analysis
 from packages.shared.db.session import get_session_factory

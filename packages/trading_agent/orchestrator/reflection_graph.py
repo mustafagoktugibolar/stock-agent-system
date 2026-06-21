@@ -17,7 +17,7 @@ from langgraph.graph import END, START, StateGraph
 
 from packages.shared.config.settings import get_settings
 from packages.shared.logging.logger import get_logger
-from packages.agent_core.tools.market_data import fetch_ohlcv
+from packages.analysis_agent.tools.market_data import fetch_ohlcv
 from packages.trading_agent.agents.reflection_agent import reflection_agent
 from packages.trading_agent.state.trading_state import TradingState
 from packages.trading_agent.tools.memory_retrieval import store_memory

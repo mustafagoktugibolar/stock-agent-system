@@ -54,7 +54,7 @@ def _make_initial_state(symbol: str = "AAPL") -> dict:
 
 class TestCalculateTechnicalIndicators:
     def test_returns_expected_keys(self):
-        from packages.agent_core.tools.indicators import calculate_technical_indicators
+        from packages.analysis_agent.tools.indicators import calculate_technical_indicators
 
         ohlcv = _make_ohlcv_json(n=220)
         result = json.loads(calculate_technical_indicators.invoke({"ohlcv_json": ohlcv}))
@@ -66,7 +66,7 @@ class TestCalculateTechnicalIndicators:
         assert "symbol_price" in result
 
     def test_rsi_in_valid_range(self):
-        from packages.agent_core.tools.indicators import calculate_technical_indicators
+        from packages.analysis_agent.tools.indicators import calculate_technical_indicators
 
         ohlcv = _make_ohlcv_json(n=60)
         result = json.loads(calculate_technical_indicators.invoke({"ohlcv_json": ohlcv}))
@@ -76,7 +76,7 @@ class TestCalculateTechnicalIndicators:
             assert 0 <= rsi <= 100
 
     def test_insufficient_data_returns_error(self):
-        from packages.agent_core.tools.indicators import calculate_technical_indicators
+        from packages.analysis_agent.tools.indicators import calculate_technical_indicators
 
         ohlcv = _make_ohlcv_json(n=5)  # fewer than 30 bars
         result = json.loads(calculate_technical_indicators.invoke({"ohlcv_json": ohlcv}))
@@ -86,7 +86,7 @@ class TestCalculateTechnicalIndicators:
 
 class TestCalculateRiskMetrics:
     def test_returns_expected_keys(self):
-        from packages.agent_core.tools.risk_metrics import calculate_risk_metrics
+        from packages.analysis_agent.tools.risk_metrics import calculate_risk_metrics
 
         ohlcv = _make_ohlcv_json(n=120)
         result = json.loads(calculate_risk_metrics.invoke({"ohlcv_json": ohlcv}))
@@ -97,7 +97,7 @@ class TestCalculateRiskMetrics:
         assert "var_95_daily" in result
 
     def test_max_drawdown_is_negative_or_zero(self):
-        from packages.agent_core.tools.risk_metrics import calculate_risk_metrics
+        from packages.analysis_agent.tools.risk_metrics import calculate_risk_metrics
 
         ohlcv = _make_ohlcv_json(n=120)
         result = json.loads(calculate_risk_metrics.invoke({"ohlcv_json": ohlcv}))
@@ -110,7 +110,7 @@ class TestCalculateRiskMetrics:
 class TestFetchRecentNews:
     @patch("yfinance.Ticker")
     def test_returns_articles_list(self, mock_ticker_cls):
-        from packages.agent_core.tools.news_fetcher import fetch_recent_news
+        from packages.analysis_agent.tools.news_fetcher import fetch_recent_news
 
         mock_ticker = MagicMock()
         mock_ticker.news = [
@@ -137,7 +137,7 @@ class TestFetchRecentNews:
 
     @patch("yfinance.Ticker")
     def test_empty_news_returns_empty_list(self, mock_ticker_cls):
-        from packages.agent_core.tools.news_fetcher import fetch_recent_news
+        from packages.analysis_agent.tools.news_fetcher import fetch_recent_news
 
         mock_ticker = MagicMock()
         mock_ticker.news = []
@@ -158,7 +158,7 @@ class TestAnalyzeNewsSentiment:
 
     @patch("openai.OpenAI")
     def test_gpt5_model_uses_max_completion_tokens(self, mock_openai_cls, monkeypatch):
-        from packages.agent_core.tools.sentiment import analyze_news_sentiment
+        from packages.analysis_agent.tools.sentiment import analyze_news_sentiment
 
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         monkeypatch.setenv("OPENAI_MODEL", "gpt-5.4-mini")
@@ -199,7 +199,7 @@ class TestAnalyzeNewsSentiment:
 
     @patch("openai.OpenAI")
     def test_non_reasoning_model_keeps_low_temperature(self, mock_openai_cls, monkeypatch):
-        from packages.agent_core.tools.sentiment import analyze_news_sentiment
+        from packages.analysis_agent.tools.sentiment import analyze_news_sentiment
 
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         monkeypatch.setenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -242,13 +242,13 @@ class TestAnalyzeNewsSentiment:
 
 class TestGraphCompilation:
     def test_graph_compiles_without_error(self):
-        from packages.agent_core.orchestrator.graph import create_analysis_graph
+        from packages.analysis_agent.orchestrator.graph import create_analysis_graph
 
         graph = create_analysis_graph()
         assert graph is not None
 
     def test_graph_has_expected_nodes(self):
-        from packages.agent_core.orchestrator.graph import create_analysis_graph
+        from packages.analysis_agent.orchestrator.graph import create_analysis_graph
 
         graph = create_analysis_graph()
         node_names = set(graph.get_graph().nodes.keys())
@@ -259,7 +259,7 @@ class TestGraphCompilation:
         assert "llm_judge" in node_names
 
     def test_judge_runs_after_supervisor(self):
-        from packages.agent_core.orchestrator.graph import create_analysis_graph
+        from packages.analysis_agent.orchestrator.graph import create_analysis_graph
 
         graph = create_analysis_graph()
         edges = {(e.source, e.target) for e in graph.get_graph().edges}
@@ -274,7 +274,7 @@ class TestGraphCompilation:
 class TestLLMJudge:
     def test_auto_fail_without_recommendation(self):
         """The judge must fail the run without an LLM call when the supervisor produced nothing."""
-        from packages.agent_core.evaluation.llm_judge import llm_judge_agent
+        from packages.analysis_agent.evaluation.llm_judge import llm_judge_agent
 
         state = {
             "symbol": "AAPL",
@@ -289,7 +289,7 @@ class TestLLMJudge:
 
 class TestRecommendationEvaluator:
     def _make_recommendation(self, rec: str, confidence: float = 0.8) -> object:
-        from packages.agent_core.models.agent_output import FinalRecommendation
+        from packages.analysis_agent.models.agent_output import FinalRecommendation
 
         return FinalRecommendation(
             symbol="AAPL",
@@ -304,7 +304,7 @@ class TestRecommendationEvaluator:
         )
 
     def test_buy_correct_when_price_rises(self):
-        from packages.agent_core.evaluation.evaluator import RecommendationEvaluator
+        from packages.analysis_agent.evaluation.evaluator import RecommendationEvaluator
 
         evaluator = RecommendationEvaluator()
         rec = self._make_recommendation("BUY")
@@ -313,7 +313,7 @@ class TestRecommendationEvaluator:
         assert score.pct_change == 6.0
 
     def test_buy_wrong_when_price_falls(self):
-        from packages.agent_core.evaluation.evaluator import RecommendationEvaluator
+        from packages.analysis_agent.evaluation.evaluator import RecommendationEvaluator
 
         evaluator = RecommendationEvaluator()
         rec = self._make_recommendation("BUY")
@@ -321,7 +321,7 @@ class TestRecommendationEvaluator:
         assert score.correct is False
 
     def test_consistency_with_unanimous_recs(self):
-        from packages.agent_core.evaluation.evaluator import RecommendationEvaluator
+        from packages.analysis_agent.evaluation.evaluator import RecommendationEvaluator
 
         evaluator = RecommendationEvaluator()
         recs = [self._make_recommendation("BUY", 0.8 + i * 0.02) for i in range(5)]
@@ -341,7 +341,7 @@ def test_full_graph_invocation_aapl():
     Requires OPENAI_API_KEY to be set.  Run with:
         pytest tests/test_agents.py -m integration
     """
-    from packages.agent_core.orchestrator.graph import create_analysis_graph
+    from packages.analysis_agent.orchestrator.graph import create_analysis_graph
 
     graph = create_analysis_graph()
     state = _make_initial_state("AAPL")

@@ -4,13 +4,13 @@ from functools import lru_cache
 
 from langgraph.graph import END, START, StateGraph
 
-from packages.agent_core.agents.fundamentals_agent import fundamentals_agent
-from packages.agent_core.agents.news_agent import news_agent
-from packages.agent_core.agents.risk_agent import risk_agent
-from packages.agent_core.agents.supervisor_agent import supervisor_agent
-from packages.agent_core.agents.technical_agent import technical_agent
-from packages.agent_core.evaluation.llm_judge import llm_judge_agent
-from packages.agent_core.state.agent_state import AgentState
+from packages.analysis_agent.agents.fundamentals_agent import fundamentals_agent
+from packages.analysis_agent.agents.news_agent import news_agent
+from packages.analysis_agent.agents.risk_agent import risk_agent
+from packages.analysis_agent.agents.supervisor_agent import supervisor_agent
+from packages.analysis_agent.agents.technical_agent import technical_agent
+from packages.analysis_agent.evaluation.llm_judge import llm_judge_agent
+from packages.analysis_agent.state.agent_state import AgentState
 
 # ── Graph definition ──────────────────────────────────────────────────────────
 

@@ -3,7 +3,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from packages.agent_core.models.agent_output import (
+from packages.analysis_agent.models.agent_output import (
     CompanyProfile,
     FinalRecommendation,
     FinancialStatements,
