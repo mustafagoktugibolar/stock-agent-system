@@ -30,7 +30,10 @@ export const useAnalysisStore = defineStore('analysis', () => {
   const recommendation = computed(() => currentAnalysis.value?.recommendation ?? null)
   const confidence = computed(() => currentAnalysis.value?.recommendation?.confidence ?? 0)
   const isCached = computed(() => currentAnalysis.value?.cached ?? false)
-  const hasResult = computed(() => currentAnalysis.value?.status === 'completed')
+  const hasResult = computed(() => {
+    const status = currentAnalysis.value?.status
+    return status === 'completed' || status === 'partial'
+  })
 
   // ── Actions ──────────────────────────────────────────────────────────────────
   async function analyzeSymbol(symbol: string, forceRefresh = false): Promise<void> {

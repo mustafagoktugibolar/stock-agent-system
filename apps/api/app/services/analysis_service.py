@@ -26,11 +26,30 @@ class AnalysisService:
     def _cache_key(self, symbol: str, timeframe: str, language: str) -> str:
         return f"analysis:{symbol.upper()}:{timeframe}:{language}"
 
+    def _resolve_status(self, state: AgentState) -> str:
+        outputs = [
+            state.get("company_profile"),
+            state.get("financial_statements"),
+            state.get("technical_analysis"),
+            state.get("news_analysis"),
+            state.get("risk_analysis"),
+            state.get("final_recommendation"),
+            state.get("judge_verdict"),
+        ]
+        has_any_output = any(item is not None for item in outputs)
+        has_errors = bool(state.get("errors"))
+
+        if has_any_output and has_errors:
+            return "partial"
+        if has_any_output:
+            return "completed"
+        return "failed"
+
     def _build_response(self, state: AgentState, analysis_id: str) -> AnalysisResponse:
         return AnalysisResponse(
             analysis_id=analysis_id,
             symbol=state["symbol"],
-            status="completed" if not state.get("errors") else "failed",
+            status=self._resolve_status(state),
             created_at=datetime.now(timezone.utc),
             completed_at=datetime.now(timezone.utc),
             recommendation=state.get("final_recommendation"),

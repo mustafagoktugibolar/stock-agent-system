@@ -17,7 +17,7 @@ from packages.analysis_agent.models.agent_output import (
 class AnalysisResponse(BaseModel):
     analysis_id: str
     symbol: str
-    status: Literal["pending", "running", "completed", "failed"]
+    status: Literal["pending", "running", "completed", "partial", "failed"]
     created_at: datetime
     completed_at: Optional[datetime] = None
     recommendation: Optional[FinalRecommendation] = None
@@ -29,4 +29,3 @@ class AnalysisResponse(BaseModel):
     judge_verdict: Optional[JudgeVerdict] = None
     errors: list[str] = Field(default_factory=list)
     cached: bool = False
-

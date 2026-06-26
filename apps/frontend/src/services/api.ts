@@ -139,7 +139,7 @@ export interface JudgeVerdict {
 export interface AnalysisResponse {
   analysis_id: string
   symbol: string
-  status: 'pending' | 'running' | 'completed' | 'failed'
+  status: 'pending' | 'running' | 'completed' | 'partial' | 'failed'
   created_at: string
   completed_at: string | null
   recommendation: FinalRecommendation | null
